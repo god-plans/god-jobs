@@ -2,7 +2,7 @@
 const route = useRoute()
 const id = computed(() => Number(route.params.id))
 
-const { get, update, remove } = useStartups()
+const { get, update, remove, sendOutreach } = useStartups()
 
 const { data: startup, error, pending, refresh } = await useAsyncData(
   `startup-${route.params.id}`,
@@ -17,6 +17,7 @@ const { data: startup, error, pending, refresh } = await useAsyncData(
 
 const saving = ref(false)
 const deleting = ref(false)
+const sending = ref(false)
 const err = ref('')
 
 const form = reactive({
@@ -36,6 +37,8 @@ const form = reactive({
   notes: '',
   techStack: '',
   fitReason: '',
+  contactEmail: '',
+  emailSubject: '',
   priorityRank: null as number | null,
   status: 'researched',
 })
@@ -60,6 +63,8 @@ watch(
     form.notes = s.notes ?? ''
     form.techStack = s.techStack ?? ''
     form.fitReason = s.fitReason ?? ''
+    form.contactEmail = s.contactEmail ?? ''
+    form.emailSubject = s.emailSubject ?? ''
     form.priorityRank = s.priorityRank
     form.status = s.status ?? 'researched'
   },
@@ -82,6 +87,23 @@ async function save() {
   }
   finally {
     saving.value = false
+  }
+}
+
+async function sendMail() {
+  err.value = ''
+  sending.value = true
+  try {
+    const res = await sendOutreach([id.value])
+    const r = res.results[0]
+    if (!r?.ok) err.value = r?.error || 'Send failed'
+    await refresh()
+  }
+  catch (e: unknown) {
+    err.value = e instanceof Error ? e.message : 'Send failed'
+  }
+  finally {
+    sending.value = false
   }
 }
 
@@ -190,6 +212,14 @@ async function del() {
           <span class="text-xs font-medium text-slate-400">Improvement idea</span>
           <textarea v-model="form.improvementIdea" rows="3" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
         </label>
+        <label class="block">
+          <span class="text-xs font-medium text-slate-400">Contact email (recipient)</span>
+          <input v-model="form.contactEmail" type="email" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="verified@company.com">
+        </label>
+        <label class="block">
+          <span class="text-xs font-medium text-slate-400">Email subject (optional)</span>
+          <input v-model="form.emailSubject" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white">
+        </label>
         <label class="block sm:col-span-2">
           <span class="text-xs font-medium text-slate-400">Cold email draft</span>
           <textarea v-model="form.coldEmail" rows="8" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-sans text-sm text-white" />
@@ -200,6 +230,15 @@ async function del() {
         </label>
       </div>
 
+      <div v-if="startup?.lastOutreachAt || startup?.lastOutreachError" class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-xs text-slate-400">
+        <p v-if="startup?.lastOutreachAt">
+          Last sent: {{ startup.lastOutreachAt }}
+        </p>
+        <p v-if="startup?.lastOutreachError" class="text-red-400">
+          Last error: {{ startup.lastOutreachError }}
+        </p>
+      </div>
+
       <p v-if="err" class="text-sm text-red-400">{{ err }}</p>
       <div class="flex flex-wrap gap-2">
         <button
@@ -208,6 +247,14 @@ async function del() {
           class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
         >
           {{ saving ? 'Saving…' : 'Save' }}
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border border-sky-700 bg-sky-950/50 px-4 py-2 text-sm text-sky-200 hover:bg-sky-950/80 disabled:opacity-50"
+          :disabled="sending"
+          @click="sendMail"
+        >
+          {{ sending ? 'Sending…' : 'Send outreach email' }}
         </button>
         <button
           type="button"

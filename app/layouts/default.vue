@@ -14,6 +14,13 @@
             Startups
           </NuxtLink>
           <NuxtLink
+            to="/jobs"
+            class="rounded-md px-2 py-1 text-slate-300 hover:bg-slate-800 hover:text-white"
+            active-class="bg-slate-800 text-white"
+          >
+            Jobs
+          </NuxtLink>
+          <NuxtLink
             to="/prompts"
             class="rounded-md px-2 py-1 text-slate-300 hover:bg-slate-800 hover:text-white"
             active-class="bg-slate-800 text-white"

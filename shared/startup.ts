@@ -19,6 +19,10 @@ export interface Startup {
   fitReason: string | null
   priorityRank: number | null
   status: string
+  contactEmail: string | null
+  emailSubject: string | null
+  lastOutreachAt: string | null
+  lastOutreachError: string | null
   createdAt: string
   updatedAt: string
 }

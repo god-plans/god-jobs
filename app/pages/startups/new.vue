@@ -20,6 +20,8 @@ const form = reactive({
   notes: '',
   techStack: '',
   fitReason: '',
+  contactEmail: '',
+  emailSubject: '',
   priorityRank: null as number | null,
   status: 'researched',
 })
@@ -130,6 +132,14 @@ async function submit() {
         <label class="block sm:col-span-2">
           <span class="text-xs font-medium text-slate-400">Improvement idea</span>
           <textarea v-model="form.improvementIdea" rows="3" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" />
+        </label>
+        <label class="block">
+          <span class="text-xs font-medium text-slate-400">Contact email (recipient)</span>
+          <input v-model="form.contactEmail" type="email" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="verified@company.com">
+        </label>
+        <label class="block">
+          <span class="text-xs font-medium text-slate-400">Email subject (optional)</span>
+          <input v-model="form.emailSubject" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="Uses OUTREACH_SUBJECT env if empty">
         </label>
         <label class="block sm:col-span-2">
           <span class="text-xs font-medium text-slate-400">Cold email draft</span>

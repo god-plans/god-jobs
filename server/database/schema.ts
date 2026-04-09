@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, integer, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 export const startups = sqliteTable('startups', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -21,9 +21,36 @@ export const startups = sqliteTable('startups', {
   /** 1–3 = top priority slots; null = not prioritized */
   priorityRank: integer('priority_rank'),
   status: text('status').notNull().default('researched'),
+  /** Verified recipient for outreach */
+  contactEmail: text('contact_email'),
+  emailSubject: text('email_subject'),
+  lastOutreachAt: text('last_outreach_at'),
+  lastOutreachError: text('last_outreach_error'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 })
 
 export type Startup = typeof startups.$inferSelect
 export type NewStartup = typeof startups.$inferInsert
+
+export const jobListings = sqliteTable(
+  'job_listings',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    source: text('source').notNull(),
+    externalId: text('external_id').notNull(),
+    title: text('title').notNull(),
+    company: text('company'),
+    url: text('url').notNull(),
+    location: text('location'),
+    remote: integer('remote', { mode: 'boolean' }),
+    postedAt: text('posted_at'),
+    snippet: text('snippet'),
+    rawJson: text('raw_json'),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => [uniqueIndex('job_listings_source_external').on(table.source, table.externalId)],
+)
+
+export type JobListing = typeof jobListings.$inferSelect

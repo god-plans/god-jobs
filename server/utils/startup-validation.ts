@@ -25,6 +25,8 @@ export const insertStartupSchema = z.object({
   notes: textOpt,
   techStack: textOpt,
   fitReason: textOpt,
+  contactEmail: shortTextOpt,
+  emailSubject: shortTextOpt,
   priorityRank: z
     .union([z.number().int().min(1).max(3), z.null()])
     .optional(),
