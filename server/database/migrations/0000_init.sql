@@ -1,0 +1,23 @@
+CREATE TABLE `startups` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text NOT NULL,
+	`website` text,
+	`description` text,
+	`funding_stage` text,
+	`funding_info` text,
+	`employee_range` text,
+	`growth_signals` text,
+	`ceo_name` text,
+	`ceo_linkedin` text,
+	`cto_name` text,
+	`cto_linkedin` text,
+	`improvement_idea` text,
+	`cold_email` text,
+	`notes` text,
+	`tech_stack` text,
+	`fit_reason` text,
+	`priority_rank` integer,
+	`status` text DEFAULT 'researched' NOT NULL,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL
+);
