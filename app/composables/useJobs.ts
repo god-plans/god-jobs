@@ -5,15 +5,30 @@ export type JobsListResponse = {
   meta: { lastSync: string | null; total: number; limit: number; offset: number }
 }
 
+export type WorkplaceFilter = 'any' | 'remote' | 'onsite'
+
 export function useJobs() {
   async function list(params?: {
     source?: string
     q?: string
-    remote?: boolean
+    /** Prefer over legacy `remote`; maps to `workplace` query param. */
+    workplace?: WorkplaceFilter
+    company?: string
+    location?: string
+    postedAfter?: string
+    postedBefore?: string
+    category?: string
+    sort?: 'updatedAt' | 'postedAt'
+    order?: 'asc' | 'desc'
     limit?: number
     offset?: number
   }) {
-    return await $fetch<JobsListResponse>('/api/jobs', { query: params as Record<string, string | number | boolean | undefined> })
+    const { workplace, ...rest } = params ?? {}
+    const query: Record<string, string | number | boolean | undefined> = { ...rest }
+    if (workplace && workplace !== 'any') {
+      query.workplace = workplace
+    }
+    return await $fetch<JobsListResponse>('/api/jobs', { query })
   }
 
   async function sync(body?: {
