@@ -1,6 +1,7 @@
 import { readBody } from 'h3'
 import { z } from 'zod'
 import {
+  DEFAULT_JOB_RSS_FEEDS,
   fetchArbeitnowJobs,
   fetchHnJobs,
   fetchRemoteOkJobs,
@@ -52,15 +53,16 @@ export default defineEventHandler(async (event) => {
         rows = await fetchRemoteOkJobs()
       }
       else if (src === 'rss') {
-        const urls = [...new Set([...feedsFromEnv, ...(rssFeedUrls ?? [])])]
-        if (!urls.length) {
-          result.rss = { ok: true, count: 0, note: 'Skipped: no feeds (set JOBS_RSS_FEEDS or pass rssFeedUrls)' }
+        const configured = [...new Set([...feedsFromEnv, ...(rssFeedUrls ?? [])])]
+        const urls = configured.length ? configured : [...DEFAULT_JOB_RSS_FEEDS]
+        rows = await fetchRssFeedJobs(urls)
+        if (!configured.length) {
+          result.rss = { ok: true, count: upsertJobRows(rows), note: `No JOBS_RSS_FEEDS: used default (${DEFAULT_JOB_RSS_FEEDS.join(', ')})` }
           continue
         }
-        rows = await fetchRssFeedJobs(urls)
       }
       else {
-        rows = await fetchHnJobs(query ?? '', hnHitsPerPage ?? 30)
+        rows = await fetchHnJobs(query ?? '', hnHitsPerPage ?? 50)
       }
       const count = upsertJobRows(rows)
       result[src] = { ok: true, count }

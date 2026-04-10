@@ -13,6 +13,38 @@ const rssParser = new Parser({
   headers: { 'User-Agent': UA, Accept: 'application/rss+xml, application/atom+xml, */*' },
 })
 
+/** Used when `JOBS_RSS_FEEDS` is empty so “RSS” sync still ingests a public job feed. */
+export const DEFAULT_JOB_RSS_FEEDS = ['https://weworkremotely.com/remote-jobs.rss'] as const
+
+async function fetchAndParseFeed(feedUrl: string) {
+  const res = await fetch(feedUrl, {
+    redirect: 'follow',
+    headers: {
+      'User-Agent': UA,
+      Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
+    },
+  })
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`)
+  }
+  const text = await res.text()
+  return rssParser.parseString(text)
+}
+
+function hnPostedAt(hit: Record<string, unknown>): string | null {
+  if (typeof hit.created_at_i === 'number' && Number.isFinite(hit.created_at_i)) {
+    return new Date(hit.created_at_i * 1000).toISOString()
+  }
+  if (typeof hit.created_at === 'string') {
+    const t = Date.parse(hit.created_at)
+    return Number.isFinite(t) ? new Date(t).toISOString() : null
+  }
+  if (typeof hit.created_at === 'number') {
+    return new Date(hit.created_at * 1000).toISOString()
+  }
+  return null
+}
+
 export async function fetchRemotiveJobs(): Promise<NewJobListing[]> {
   const res = await fetch('https://remotive.com/api/remote-jobs', {
     headers: { 'User-Agent': UA, Accept: 'application/json' },
@@ -117,21 +149,22 @@ export async function fetchRemoteOkJobs(): Promise<NewJobListing[]> {
   return out
 }
 
-/** RSS or Atom feeds — use for Telegram public channels via RSSHub, etc. (`/telegram/channel/:name`). */
+/** RSS or Atom feeds — Telegram via RSSHub, job-board RSS, etc. Uses `fetch` + parse (not `parseURL`) for consistent UA/TLS. */
 export async function fetchRssFeedJobs(feedUrls: string[]): Promise<NewJobListing[]> {
   const urls = [...new Set(feedUrls.map((u) => u.trim()).filter(Boolean))]
   const out: NewJobListing[] = []
   for (const feedUrl of urls) {
-    let feed: Awaited<ReturnType<typeof rssParser.parseURL>>
+    let feed: Awaited<ReturnType<typeof rssParser.parseString>>
     try {
-      feed = await rssParser.parseURL(feedUrl)
+      feed = await fetchAndParseFeed(feedUrl)
     }
     catch (e: unknown) {
       throw new Error(`RSS ${feedUrl}: ${e instanceof Error ? e.message : String(e)}`)
     }
     const feedLabel = feed.title?.trim() || new URL(feedUrl).hostname
     for (const item of feed.items ?? []) {
-      const link = item.link?.trim()
+      const guid = typeof item.guid === 'string' ? item.guid.trim() : ''
+      const link = (item.link?.trim() || (guid.startsWith('http') ? guid : '')) || ''
       const title = item.title?.trim()
       if (!link || !title) continue
       const idSource = `${item.guid ?? link}${item.isoDate ?? item.pubDate ?? ''}`
@@ -156,8 +189,9 @@ export async function fetchRssFeedJobs(feedUrls: string[]): Promise<NewJobListin
 }
 
 /** Hacker News Algolia — story search; results are filtered to hiring-like titles. */
-export async function fetchHnJobs(query: string, hitsPerPage = 30): Promise<NewJobListing[]> {
-  const q = query.trim() || 'hiring developer OR hiring engineer remote'
+export async function fetchHnJobs(query: string, hitsPerPage = 50): Promise<NewJobListing[]> {
+  /** Broad query — the narrow `… OR …` form only matched ~15 indexed stories; filter does the real culling. */
+  const q = query.trim() || 'hiring'
   const u = new URL('https://hn.algolia.com/api/v1/search')
   u.searchParams.set('tags', 'story')
   u.searchParams.set('query', q)
@@ -185,7 +219,7 @@ export async function fetchHnJobs(query: string, hitsPerPage = 30): Promise<NewJ
       url: storyUrl,
       location: null,
       remote: /remote/i.test(title) || /remote/i.test(storyText),
-      postedAt: typeof hit.created_at === 'number' ? new Date(hit.created_at * 1000).toISOString() : null,
+      postedAt: hnPostedAt(hit),
       snippet: truncate(stripHtml(storyText)),
       rawJson: JSON.stringify(hit),
     })

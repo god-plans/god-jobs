@@ -4,6 +4,8 @@ import type { JobListing } from '~~/shared/job'
 const source = ref<string | ''>('')
 const q = ref('')
 const remoteOnly = ref(false)
+const page = ref(1)
+const pageSize = ref(50)
 
 const { list, sync } = useJobs()
 
@@ -16,6 +18,14 @@ watch(q, (v) => {
   }, 350)
 })
 
+watch([source, remoteOnly, debouncedQ], () => {
+  page.value = 1
+})
+
+watch(pageSize, () => {
+  page.value = 1
+})
+
 const { data, pending, refresh, error } = await useAsyncData(
   'jobs-list',
   () =>
@@ -23,10 +33,28 @@ const { data, pending, refresh, error } = await useAsyncData(
       source: source.value || undefined,
       q: debouncedQ.value.trim() || undefined,
       remote: remoteOnly.value || undefined,
-      limit: 80,
+      limit: pageSize.value,
+      offset: (page.value - 1) * pageSize.value,
     }),
-  { watch: [source, remoteOnly, debouncedQ] },
+  { watch: [source, remoteOnly, debouncedQ, page, pageSize] },
 )
+
+const total = computed(() => data.value?.meta?.total ?? 0)
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+const showingFrom = computed(() => (total.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1))
+const showingTo = computed(() => Math.min(page.value * pageSize.value, total.value))
+
+function goPrev() {
+  page.value = Math.max(1, page.value - 1)
+}
+
+function goNext() {
+  page.value = Math.min(pageCount.value, page.value + 1)
+}
+
+watch([total, pageCount], () => {
+  if (page.value > pageCount.value) page.value = Math.max(1, pageCount.value)
+})
 
 const syncing = ref(false)
 const syncMsg = ref('')
@@ -70,7 +98,7 @@ function remoteLabel(job: JobListing) {
             target="_blank"
             rel="noopener noreferrer"
           >RSSHub</a>).
-          Set <code class="rounded bg-slate-800 px-1 text-xs">NUXT_JOBS_RSS_FEEDS</code> for feed URLs. Export:
+          Without <code class="rounded bg-slate-800 px-1 text-xs">NUXT_JOBS_RSS_FEEDS</code>, RSS sync uses a default public feed (We Work Remotely). Export:
           <a href="/api/export/jobs" class="text-emerald-500 hover:text-emerald-400">JSON</a>
           ·
           <a href="/api/export/jobs?format=csv" class="text-emerald-500 hover:text-emerald-400">CSV</a>.
@@ -121,6 +149,49 @@ function remoteLabel(job: JobListing) {
       >
         Refresh
       </button>
+    </div>
+
+    <div class="flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <p class="text-sm text-slate-400">
+        <span v-if="total > 0">Showing {{ showingFrom }}–{{ showingTo }} of {{ total }}</span>
+        <span v-else>No matching rows</span>
+      </p>
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="flex items-center gap-2 text-sm text-slate-400">
+          Per page
+          <select
+            v-model.number="pageSize"
+            class="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-white"
+          >
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+            <option :value="80">80</option>
+            <option :value="100">100</option>
+            <option :value="200">200</option>
+          </select>
+        </label>
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            class="rounded-lg border border-slate-600 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+            :disabled="pending || page <= 1"
+            @click="goPrev"
+          >
+            Previous
+          </button>
+          <span class="px-2 text-sm tabular-nums text-slate-400">
+            {{ page }} / {{ pageCount }}
+          </span>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-600 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+            :disabled="pending || page >= pageCount || total === 0"
+            @click="goNext"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
 
     <p v-if="pending" class="text-sm text-slate-400">Loading…</p>
