@@ -8,4 +8,9 @@ export default defineNuxtConfig({
     port: 3039, // to avoid conflicts with other projects
 
   },
+
+  runtimeConfig: {
+    /** Newline- or comma-separated RSS/Atom URLs (e.g. RSSHub `…/telegram/channel/:username`). Override with env `NUXT_JOBS_RSS_FEEDS`. */
+    jobsRssFeeds: '',
+  },
 })

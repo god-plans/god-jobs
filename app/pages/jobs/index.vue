@@ -63,7 +63,17 @@ function remoteLabel(job: JobListing) {
       <div>
         <h1 class="text-2xl font-semibold text-white">Jobs</h1>
         <p class="mt-1 text-sm text-slate-400">
-          Aggregated from Remotive, Arbeitnow, and HN Algolia. Respect API rate limits; data is for your search only.
+          Remotive, Arbeitnow, Remote OK, filtered HN Algolia, and optional RSS (e.g. Telegram via
+          <a
+            href="https://github.com/DIYgod/RSSHub"
+            class="text-emerald-500 underline hover:text-emerald-400"
+            target="_blank"
+            rel="noopener noreferrer"
+          >RSSHub</a>).
+          Set <code class="rounded bg-slate-800 px-1 text-xs">NUXT_JOBS_RSS_FEEDS</code> for feed URLs. Export:
+          <a href="/api/export/jobs" class="text-emerald-500 hover:text-emerald-400">JSON</a>
+          ·
+          <a href="/api/export/jobs?format=csv" class="text-emerald-500 hover:text-emerald-400">CSV</a>.
         </p>
         <p v-if="data?.meta?.lastSync" class="mt-1 text-xs text-slate-500">
           Last row update: {{ data.meta.lastSync }} · Total (filtered): {{ data.meta.total }}
@@ -97,6 +107,8 @@ function remoteLabel(job: JobListing) {
         <option value="remotive">Remotive</option>
         <option value="arbeitnow">Arbeitnow</option>
         <option value="hn">Hacker News</option>
+        <option value="remoteok">Remote OK</option>
+        <option value="rss">RSS (Telegram, etc.)</option>
       </select>
       <label class="flex items-center gap-2 text-sm text-slate-300">
         <input v-model="remoteOnly" type="checkbox" class="rounded border-slate-600">

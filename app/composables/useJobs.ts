@@ -17,9 +17,10 @@ export function useJobs() {
   }
 
   async function sync(body?: {
-    sources?: ('remotive' | 'arbeitnow' | 'hn')[]
+    sources?: ('remotive' | 'arbeitnow' | 'hn' | 'remoteok' | 'rss')[]
     query?: string
     hnHitsPerPage?: number
+    rssFeedUrls?: string[]
   }) {
     return await $fetch<{ result: Record<string, { ok: boolean; count?: number; error?: string }>; syncedAt: string }>(
       '/api/jobs/sync',
