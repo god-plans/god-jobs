@@ -1,12 +1,29 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+function useNetlifyNitroPreset() {
+  return Boolean(
+    process.env.NETLIFY
+    || process.env.SERVER_PRESET === 'netlify',
+  )
+}
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss'],
 
-  /** Netlify sets `NETLIFY` during build — use the Functions preset so SSR/API routes deploy correctly. */
+  /**
+   * Netlify sets `NETLIFY` during build. Some sites set `SERVER_PRESET=netlify` in the UI instead.
+   * CJS deps like papaparse can break Nitro's file tracer unless SSR bundles them.
+   */
   nitro: {
-    preset: process.env.NETLIFY ? 'netlify' : undefined,
+    preset: useNetlifyNitroPreset() ? 'netlify' : undefined,
+  },
+
+  vite: {
+    ssr: {
+      noExternal: ['papaparse'],
+    },
   },
 
   devServer: {
