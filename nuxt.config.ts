@@ -4,6 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss'],
 
+  /** Netlify sets `NETLIFY` during build — use the Functions preset so SSR/API routes deploy correctly. */
+  nitro: {
+    preset: process.env.NETLIFY ? 'netlify' : undefined,
+  },
+
   devServer: {
     port: 3039, // to avoid conflicts with other projects
 
