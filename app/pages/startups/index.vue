@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Startup } from '~~/shared/startup'
+import { isComingSoon } from '~~/shared/comingSoon'
 
 useSiteSeo({
   title: 'Startups',
@@ -76,13 +77,31 @@ function statusBadge(s: string) {
         >
           Export CSV
         </a>
+        <button
+          v-if="isComingSoon"
+          type="button"
+          disabled
+          class="inline-flex cursor-not-allowed items-center rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-slate-500"
+        >
+          Import CSV — coming soon
+        </button>
         <NuxtLink
+          v-else
           to="/startups/import"
           class="inline-flex items-center rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-100 hover:bg-slate-700"
         >
           Import CSV
         </NuxtLink>
+        <button
+          v-if="isComingSoon"
+          type="button"
+          disabled
+          class="inline-flex cursor-not-allowed items-center rounded-lg bg-emerald-900/50 px-3 py-2 text-sm font-medium text-emerald-200/70"
+        >
+          Add startup — coming soon
+        </button>
         <NuxtLink
+          v-else
           to="/startups/new"
           class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500"
         >
@@ -90,6 +109,20 @@ function statusBadge(s: string) {
         </NuxtLink>
       </div>
     </div>
+
+    <section class="rounded-xl border border-amber-900/40 bg-gradient-to-br from-amber-950/30 to-slate-900/80 p-5">
+      <h2 class="text-lg font-semibold text-amber-100">
+        God Plans
+      </h2>
+      <p class="mt-2 text-sm leading-relaxed text-slate-300">
+        <strong class="text-amber-200/90">God Plans</strong> are the upcoming paid tiers for this workspace: deeper startup CRM,
+        guided outreach sequences, and tighter integration with the God Jobs board (saved searches, alerts, and shared shortlists for teams).
+        We are finishing the core job experience first; CRM actions above are temporarily marked <em class="text-slate-400">coming soon</em> until billing and quotas are ready.
+      </p>
+      <p class="mt-3 text-xs text-slate-500">
+        Expect a simple <span class="text-slate-400">Starter</span> tier for solo operators and a <span class="text-slate-400">Team / God</span> tier with seats, exports, and priority sync—details will ship with pricing.
+      </p>
+    </section>
 
     <div class="flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/50 p-4 sm:flex-row sm:items-center">
       <input

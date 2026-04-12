@@ -7,6 +7,7 @@ import {
   defaultPlaceholders,
   fillTemplate,
 } from '~/utils/prompts'
+import { isComingSoon } from '~~/shared/comingSoon'
 
 useSiteSeo({
   title: 'Prompt pack',
@@ -49,6 +50,8 @@ const filledSenior = computed(() =>
 
 const copied = ref<string | null>(null)
 async function copy(text: string, key: string) {
+  if (isComingSoon)
+    return
   try {
     await navigator.clipboard.writeText(text)
     copied.value = key
@@ -114,10 +117,12 @@ async function copy(text: string, key: string) {
         <h2 class="text-sm font-medium text-slate-200">{{ block.title }}</h2>
         <button
           type="button"
-          class="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-100 hover:bg-slate-700"
+          class="rounded-md px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-60"
+          :class="isComingSoon ? 'bg-slate-800/80 text-slate-500' : 'bg-slate-800 text-slate-100 hover:bg-slate-700'"
+          :disabled="isComingSoon"
           @click="copy(block.text, block.key)"
         >
-          {{ copied === block.key ? 'Copied' : 'Copy' }}
+          {{ isComingSoon ? 'Coming soon' : copied === block.key ? 'Copied' : 'Copy' }}
         </button>
       </div>
       <pre class="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-950 p-4 text-xs leading-relaxed text-slate-300">{{ block.text }}</pre>

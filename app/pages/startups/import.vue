@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isComingSoon } from '~~/shared/comingSoon'
+
 useSiteSeo({
   title: 'Import startups',
   description: 'Import or discover startups for your private list.',
@@ -20,6 +22,8 @@ const fetching = ref(false)
 const fetchMsg = ref('')
 
 async function doImport() {
+  if (isComingSoon)
+    return
   importResult.value = ''
   if (!file.value) {
     importResult.value = 'Choose a CSV file first.'
@@ -40,6 +44,8 @@ async function doImport() {
 }
 
 async function fetchGh() {
+  if (isComingSoon)
+    return
   fetchMsg.value = ''
   fetching.value = true
   try {
@@ -55,6 +61,8 @@ async function fetchGh() {
 }
 
 async function fetchHn() {
+  if (isComingSoon)
+    return
   fetchMsg.value = ''
   fetching.value = true
   try {
@@ -90,11 +98,11 @@ async function fetchHn() {
       >
       <button
         type="button"
-        class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
-        :disabled="importing"
+        class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+        :disabled="importing || isComingSoon"
         @click="doImport"
       >
-        {{ importing ? 'Importing…' : 'Upload & import' }}
+        {{ isComingSoon ? 'Coming soon' : importing ? 'Importing…' : 'Upload & import' }}
       </button>
       <p v-if="importResult" class="text-sm text-slate-300">{{ importResult }}</p>
     </section>
@@ -114,11 +122,11 @@ async function fetchHn() {
           </label>
           <button
             type="button"
-            class="rounded bg-slate-700 px-3 py-1.5 text-sm text-white hover:bg-slate-600 disabled:opacity-50"
-            :disabled="fetching"
+            class="rounded bg-slate-700 px-3 py-1.5 text-sm text-white hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="fetching || isComingSoon"
             @click="fetchGh"
           >
-            Fetch orgs
+            {{ isComingSoon ? 'Coming soon' : 'Fetch orgs' }}
           </button>
         </div>
         <div class="space-y-2 rounded-lg border border-slate-800 p-3">
@@ -130,11 +138,11 @@ async function fetchHn() {
           </label>
           <button
             type="button"
-            class="rounded bg-slate-700 px-3 py-1.5 text-sm text-white hover:bg-slate-600 disabled:opacity-50"
-            :disabled="fetching"
+            class="rounded bg-slate-700 px-3 py-1.5 text-sm text-white hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="fetching || isComingSoon"
             @click="fetchHn"
           >
-            Fetch stories
+            {{ isComingSoon ? 'Coming soon' : 'Fetch stories' }}
           </button>
         </div>
       </div>

@@ -3,8 +3,9 @@ import type { JobListing } from '~~/shared/job'
 import { JOB_CATEGORY_PRESETS } from '~~/shared/jobCategoryPresets'
 
 useSiteSeo({
-  title: 'Job listings',
-  description: 'Search curated job posts from RSS and other sources—filter by keyword, company, location, remote or on-site, and category.',
+  title: 'Job board',
+  description:
+    'Search curated job posts from multiple feeds—filter by keyword, company, location, remote or on-site, and category. Open each listing at the source.',
   path: '/jobs',
   indexable: true,
 })
@@ -169,10 +170,13 @@ function toggleCategory(id: string) {
     <div class="flex flex-col gap-4 border-b border-slate-800/80 pb-6 sm:flex-row sm:items-start sm:justify-between">
       <div class="min-w-0 flex-1 space-y-2">
         <h1 class="text-3xl font-semibold tracking-tight text-white">
-          Jobs
+          Job board
         </h1>
         <p class="text-sm text-slate-400">
-          Search aggregated listings. Use categories and filters to narrow results.
+          Search aggregated listings from multiple feeds. Use categories and filters to narrow results, then open each role at its source.
+        </p>
+        <p class="text-xs text-slate-500">
+          <NuxtLink to="/" class="text-emerald-500/90 hover:text-emerald-400">← Back to home</NuxtLink>
         </p>
         <details class="group text-sm text-slate-500">
           <summary class="cursor-pointer list-none text-emerald-500/90 hover:text-emerald-400 [&::-webkit-details-marker]:hidden">
@@ -349,7 +353,7 @@ function toggleCategory(id: string) {
               type="text"
               autocomplete="organization"
               class="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
-              placeholder="e.g. Acme"
+              placeholder="e.g. godplans"
             >
           </div>
           <div class="flex flex-col gap-1">

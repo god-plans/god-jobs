@@ -73,7 +73,7 @@ Give me:
 
 export const defaultPlaceholders = {
   role: 'frontend developer',
-  stack: 'Vue.js, Nuxt, SaaS products',
+  stack: 'Vue.js, Nuxt, godplans',
   prefs: '',
 }
 

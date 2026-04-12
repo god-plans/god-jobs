@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isComingSoon } from '~~/shared/comingSoon'
+
 const route = useRoute()
 const id = computed(() => Number(route.params.id))
 
@@ -82,6 +84,8 @@ watch(
 )
 
 async function save() {
+  if (isComingSoon)
+    return
   err.value = ''
   if (!form.name.trim()) {
     err.value = 'Name is required.'
@@ -101,6 +105,8 @@ async function save() {
 }
 
 async function sendMail() {
+  if (isComingSoon)
+    return
   err.value = ''
   sending.value = true
   try {
@@ -118,6 +124,8 @@ async function sendMail() {
 }
 
 async function del() {
+  if (isComingSoon)
+    return
   if (!confirm('Delete this startup?')) return
   deleting.value = true
   err.value = ''
@@ -253,26 +261,26 @@ async function del() {
       <div class="flex flex-wrap gap-2">
         <button
           type="submit"
-          :disabled="saving"
-          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+          :disabled="saving || isComingSoon"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {{ saving ? 'Saving…' : 'Save' }}
+          {{ isComingSoon ? 'Coming soon' : saving ? 'Saving…' : 'Save' }}
         </button>
         <button
           type="button"
-          class="rounded-lg border border-sky-700 bg-sky-950/50 px-4 py-2 text-sm text-sky-200 hover:bg-sky-950/80 disabled:opacity-50"
-          :disabled="sending"
+          class="rounded-lg border border-sky-700 bg-sky-950/50 px-4 py-2 text-sm text-sky-200 hover:bg-sky-950/80 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="sending || isComingSoon"
           @click="sendMail"
         >
-          {{ sending ? 'Sending…' : 'Send outreach email' }}
+          {{ isComingSoon ? 'Coming soon' : sending ? 'Sending…' : 'Send outreach email' }}
         </button>
         <button
           type="button"
-          class="rounded-lg border border-red-900/80 bg-red-950/40 px-4 py-2 text-sm text-red-200 hover:bg-red-950/70 disabled:opacity-50"
-          :disabled="deleting"
+          class="rounded-lg border border-red-900/80 bg-red-950/40 px-4 py-2 text-sm text-red-200 hover:bg-red-950/70 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="deleting || isComingSoon"
           @click="del"
         >
-          {{ deleting ? 'Deleting…' : 'Delete' }}
+          {{ isComingSoon ? 'Coming soon' : deleting ? 'Deleting…' : 'Delete' }}
         </button>
         <NuxtLink to="/startups" class="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
           Cancel

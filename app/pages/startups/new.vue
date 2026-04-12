@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isComingSoon } from '~~/shared/comingSoon'
+
 useSiteSeo({
   title: 'New startup',
   description: 'Add a startup to your private outreach list.',
@@ -34,6 +36,8 @@ const form = reactive({
 })
 
 async function submit() {
+  if (isComingSoon)
+    return
   err.value = ''
   if (!form.name.trim()) {
     err.value = 'Name is required.'
@@ -162,10 +166,10 @@ async function submit() {
       <div class="flex gap-2">
         <button
           type="submit"
-          :disabled="saving"
-          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+          :disabled="saving || isComingSoon"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {{ saving ? 'Saving…' : 'Create' }}
+          {{ isComingSoon ? 'Coming soon' : saving ? 'Saving…' : 'Create' }}
         </button>
         <NuxtLink to="/startups" class="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
           Cancel
