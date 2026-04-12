@@ -18,6 +18,7 @@ export function useSiteSeo(opts: {
 
   const indexable = opts.indexable !== false
   const robotsContent = indexable ? 'index, follow' : 'noindex, nofollow'
+  const ogImage = base ? `${base}/logo.png` : undefined
 
   useSeoMeta({
     title: opts.title,
@@ -27,6 +28,7 @@ export function useSiteSeo(opts: {
     ogDescription: opts.description,
     ogType: 'website',
     ...(absolute ? { ogUrl: absolute } : {}),
+    ...(ogImage ? { ogImage, twitterImage: ogImage } : {}),
     twitterCard: 'summary_large_image',
     twitterTitle: opts.title,
     twitterDescription: opts.description,

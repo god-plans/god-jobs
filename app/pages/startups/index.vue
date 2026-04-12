@@ -57,7 +57,10 @@ function statusBadge(s: string) {
   <div class="space-y-6">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 class="text-2xl font-semibold text-white">Startups</h1>
+        <div class="flex flex-wrap items-center gap-3">
+          <AppLogo :as-link="false" size="sm" :show-wordmark="false" />
+          <h1 class="text-2xl font-semibold text-white">Startups</h1>
+        </div>
         <p class="mt-1 text-sm text-slate-400">
           Track research, contacts, and cold emails. Top 3 priorities are highlighted.
         </p>

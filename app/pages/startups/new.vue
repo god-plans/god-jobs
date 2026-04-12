@@ -65,7 +65,10 @@ async function submit() {
   <div class="mx-auto max-w-3xl space-y-6">
     <div>
       <NuxtLink to="/startups" class="text-sm text-emerald-400 hover:text-emerald-300">← Back to list</NuxtLink>
-      <h1 class="mt-2 text-2xl font-semibold text-white">New startup</h1>
+      <div class="mt-2 flex flex-wrap items-center gap-3">
+        <AppLogo :as-link="false" size="sm" :show-wordmark="false" />
+        <h1 class="text-2xl font-semibold text-white">New startup</h1>
+      </div>
     </div>
 
     <form class="space-y-4" @submit.prevent="submit">

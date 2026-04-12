@@ -169,9 +169,12 @@ function toggleCategory(id: string) {
     <!-- Hero -->
     <div class="flex flex-col gap-4 border-b border-slate-800/80 pb-6 sm:flex-row sm:items-start sm:justify-between">
       <div class="min-w-0 flex-1 space-y-2">
-        <h1 class="text-3xl font-semibold tracking-tight text-white">
-          Job board
-        </h1>
+        <div class="flex flex-wrap items-center gap-3">
+          <AppLogo :as-link="false" size="sm" :show-wordmark="false" />
+          <h1 class="text-3xl font-semibold tracking-tight text-white">
+            Job board
+          </h1>
+        </div>
         <p class="text-sm text-slate-400">
           Search aggregated listings from multiple feeds. Use categories and filters to narrow results, then open each role at its source.
         </p>

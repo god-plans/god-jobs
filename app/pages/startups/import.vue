@@ -82,7 +82,10 @@ async function fetchHn() {
   <div class="mx-auto max-w-3xl space-y-10">
     <div>
       <NuxtLink to="/startups" class="text-sm text-emerald-400 hover:text-emerald-300">← Back to list</NuxtLink>
-      <h1 class="mt-2 text-2xl font-semibold text-white">Import &amp; discovery</h1>
+      <div class="mt-2 flex flex-wrap items-center gap-3">
+        <AppLogo :as-link="false" size="sm" :show-wordmark="false" />
+        <h1 class="text-2xl font-semibold text-white">Import &amp; discovery</h1>
+      </div>
       <p class="mt-1 text-sm text-slate-400">
         CSV columns use the same names as export (snake_case). For outreach you still need verified <code class="text-slate-300">contact_email</code> on each row.
       </p>

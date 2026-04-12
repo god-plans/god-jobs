@@ -68,7 +68,10 @@ async function copy(text: string, key: string) {
 <template>
   <div class="space-y-10">
     <div>
-      <h1 class="text-2xl font-semibold text-white">Prompt pack</h1>
+      <div class="flex flex-wrap items-center gap-3">
+        <AppLogo :as-link="false" size="sm" :show-wordmark="false" />
+        <h1 class="text-2xl font-semibold text-white">Prompt pack</h1>
+      </div>
       <p class="mt-1 text-sm text-slate-400">
         Copy prompts into ChatGPT or your agent. Optional fields below fill placeholders in follow-up prompts.
       </p>

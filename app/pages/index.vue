@@ -9,7 +9,7 @@ useSiteSeo({
 </script>
 
 <template>
-  <div class="w-full space-y-0">
+  <div class="w-full space-y-20">
     <!-- Hero -->
     <section class="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-gradient-to-b from-slate-900/90 via-slate-950 to-slate-950 px-6 py-14 sm:px-10 sm:py-20">
       <div
@@ -21,6 +21,9 @@ useSiteSeo({
         aria-hidden="true"
       />
       <div class="relative mx-auto max-w-3xl text-center">
+        <div class="mb-6 flex justify-center">
+          <AppLogo :as-link="false" size="xl" :show-wordmark="false" />
+        </div>
         <p class="text-xs font-medium uppercase tracking-widest text-emerald-400/90">
           Curated job feeds · One search
         </p>

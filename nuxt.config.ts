@@ -22,6 +22,10 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'en' },
       titleTemplate: '%s · God Jobs',
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/logo.png' },
+        { rel: 'apple-touch-icon', href: '/logo.png' },
+      ],
       meta: [
         { name: 'theme-color', content: '#020617' },
       ],
