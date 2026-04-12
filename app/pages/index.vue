@@ -195,6 +195,16 @@ useSiteSeo({
         >
           View job listings
         </NuxtLink>
+        <p class="mt-5 text-xs text-slate-500">
+          Part of
+          <a
+            href="https://github.com/god-plans"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-emerald-500/90 underline decoration-emerald-500/30 underline-offset-2 hover:text-emerald-400"
+          >God Plans on GitHub</a>
+          — open-source tools for builders.
+        </p>
       </div>
     </section>
   </div>
