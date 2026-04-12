@@ -1,4 +1,11 @@
 <script setup lang="ts">
+useSiteSeo({
+  title: 'Import startups',
+  description: 'Import or discover startups for your private list.',
+  path: '/startups/import',
+  indexable: false,
+})
+
 const { importCsv, fetchDiscovery } = useStartups()
 
 const file = ref<File | null>(null)

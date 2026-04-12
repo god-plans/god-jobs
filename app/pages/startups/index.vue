@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import type { Startup } from '~~/shared/startup'
 
+useSiteSeo({
+  title: 'Startups',
+  description: 'Internal startup research and outreach list for God Jobs.',
+  path: '/startups',
+  indexable: false,
+})
+
 const q = ref('')
 const status = ref<string | ''>('')
 const sort = ref<'updated' | 'name' | 'priority'>('updated')

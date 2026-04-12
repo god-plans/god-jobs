@@ -2,6 +2,13 @@
 import type { JobListing } from '~~/shared/job'
 import { JOB_CATEGORY_PRESETS } from '~~/shared/jobCategoryPresets'
 
+useSiteSeo({
+  title: 'Job listings',
+  description: 'Search curated job posts from RSS and other sources—filter by keyword, company, location, remote or on-site, and category.',
+  path: '/jobs',
+  indexable: true,
+})
+
 const source = ref<string | ''>('')
 const q = ref('')
 const workplace = ref<'any' | 'remote' | 'onsite'>('any')

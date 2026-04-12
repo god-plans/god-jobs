@@ -8,6 +8,13 @@ import {
   fillTemplate,
 } from '~/utils/prompts'
 
+useSiteSeo({
+  title: 'Prompt pack',
+  description: 'Internal prompt templates for research and outreach workflows.',
+  path: '/prompts',
+  indexable: false,
+})
+
 const prefs = ref('')
 const startupName = ref('')
 const startupUrl = ref('')

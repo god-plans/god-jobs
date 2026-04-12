@@ -1,4 +1,11 @@
 <script setup lang="ts">
+useSiteSeo({
+  title: 'New startup',
+  description: 'Add a startup to your private outreach list.',
+  path: '/startups/new',
+  indexable: false,
+})
+
 const { create } = useStartups()
 const saving = ref(false)
 const err = ref('')

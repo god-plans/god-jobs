@@ -2,8 +2,8 @@
   <div class="min-h-screen bg-slate-950 text-slate-100">
     <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <NuxtLink to="/startups" class="text-lg font-semibold tracking-tight text-white">
-          Startup outreach
+        <NuxtLink to="/" class="text-lg font-semibold tracking-tight text-white">
+          God Jobs
         </NuxtLink>
         <nav class="flex gap-4 text-sm">
           <NuxtLink

@@ -2,6 +2,16 @@
 const route = useRoute()
 const id = computed(() => Number(route.params.id))
 
+const seoPath = computed(() => `/startups/${String(route.params.id)}`)
+watchEffect(() => {
+  useSiteSeo({
+    title: 'Edit startup',
+    description: 'Private startup record and outreach details.',
+    path: seoPath.value,
+    indexable: false,
+  })
+})
+
 const { get, update, remove, sendOutreach } = useStartups()
 
 const { data: startup, error, pending, refresh } = await useAsyncData(

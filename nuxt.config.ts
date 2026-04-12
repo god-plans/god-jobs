@@ -12,5 +12,19 @@ export default defineNuxtConfig({
   runtimeConfig: {
     /** Newline- or comma-separated RSS/Atom URLs (e.g. RSSHub `…/telegram/channel/:username`). Override with env `NUXT_JOBS_RSS_FEEDS`. */
     jobsRssFeeds: '',
+    public: {
+      /** Public site origin (no trailing slash). Used for canonical URLs, Open Graph, and sitemap. Set via `NUXT_PUBLIC_SITE_URL`. */
+      siteUrl: '',
+    },
+  },
+
+  app: {
+    head: {
+      htmlAttrs: { lang: 'en' },
+      titleTemplate: '%s · God Jobs',
+      meta: [
+        { name: 'theme-color', content: '#020617' },
+      ],
+    },
   },
 })
