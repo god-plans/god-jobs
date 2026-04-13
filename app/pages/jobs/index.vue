@@ -162,6 +162,144 @@ function toggleCategory(id: string) {
     debouncedQ.value = ''
   }
 }
+
+const REPO_URL = 'https://github.com/god-plans/god-jobs'
+const SPONSOR_URL = 'https://github.com/sponsors/parsajiravand'
+const NUDGE_DISMISS_KEY = 'god-jobs-opensource-nudge-dismiss'
+const NUDGE_DAILY_KEY = 'god-jobs-opensource-nudge-daily'
+const MAX_NUDGES_PER_DAY = 2
+
+function localDateString() {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function getTodayNudgeCount(): number {
+  if (import.meta.server) return MAX_NUDGES_PER_DAY
+  try {
+    const raw = localStorage.getItem(NUDGE_DAILY_KEY)
+    if (!raw) return 0
+    const parsed = JSON.parse(raw) as { date?: string; count?: number }
+    if (parsed.date !== localDateString()) return 0
+    return typeof parsed.count === 'number' ? parsed.count : 0
+  }
+  catch {
+    return 0
+  }
+}
+
+/** Returns new total count for today after incrementing. */
+function incrementTodayNudgeCount(): number {
+  const today = localDateString()
+  let next = 1
+  try {
+    const raw = localStorage.getItem(NUDGE_DAILY_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as { date?: string; count?: number }
+      if (parsed.date === today && typeof parsed.count === 'number')
+        next = parsed.count + 1
+    }
+    localStorage.setItem(NUDGE_DAILY_KEY, JSON.stringify({ date: today, count: next }))
+  }
+  catch {
+    /* ignore */
+  }
+  return next
+}
+
+const resultsSentinel = ref<HTMLElement | null>(null)
+const contributeDialogOpen = ref(false)
+/** After closing the dialog, require the sentinel to leave the viewport once before showing again (same day). */
+const pendingExitBeforeNextNudge = ref(false)
+
+let resultsObserver: IntersectionObserver | null = null
+
+function nudgeAllowed() {
+  if (import.meta.server) return false
+  try {
+    if (localStorage.getItem(NUDGE_DISMISS_KEY) === '1') return false
+  }
+  catch {
+    return false
+  }
+  return getTodayNudgeCount() < MAX_NUDGES_PER_DAY
+}
+
+function closeContributeDialog(options?: { permanent?: boolean }) {
+  contributeDialogOpen.value = false
+  if (options?.permanent) {
+    try {
+      localStorage.setItem(NUDGE_DISMISS_KEY, '1')
+    }
+    catch {
+      /* ignore */
+    }
+    resultsObserver?.disconnect()
+    resultsObserver = null
+  }
+  else {
+    pendingExitBeforeNextNudge.value = true
+  }
+}
+
+let escapeKeyHandler: ((e: KeyboardEvent) => void) | null = null
+
+watch(contributeDialogOpen, (open) => {
+  if (!import.meta.client) return
+  if (escapeKeyHandler) {
+    window.removeEventListener('keydown', escapeKeyHandler)
+    escapeKeyHandler = null
+  }
+  if (open) {
+    escapeKeyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeContributeDialog()
+    }
+    window.addEventListener('keydown', escapeKeyHandler)
+  }
+})
+
+onMounted(() => {
+  if (!nudgeAllowed()) return
+  const el = resultsSentinel.value
+  if (!el) return
+  resultsObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) {
+          pendingExitBeforeNextNudge.value = false
+          continue
+        }
+        if (
+          nudgeAllowed()
+          && !contributeDialogOpen.value
+          && !pendingExitBeforeNextNudge.value
+        ) {
+          contributeDialogOpen.value = true
+          const shownToday = incrementTodayNudgeCount()
+          if (shownToday >= MAX_NUDGES_PER_DAY) {
+            resultsObserver?.disconnect()
+            resultsObserver = null
+          }
+          break
+        }
+      }
+    },
+    { root: null, rootMargin: '0px', threshold: 0 },
+  )
+  resultsObserver.observe(el)
+})
+
+onBeforeUnmount(() => {
+  if (escapeKeyHandler) {
+    window.removeEventListener('keydown', escapeKeyHandler)
+    escapeKeyHandler = null
+  }
+  resultsObserver?.disconnect()
+  resultsObserver = null
+})
 </script>
 
 <template>
@@ -457,6 +595,13 @@ function toggleCategory(id: string) {
       </div>
     </div>
 
+    <!-- Scroll sentinel: when this enters the viewport, we may show the open-source prompt -->
+    <div
+      ref="resultsSentinel"
+      class="pointer-events-none h-1 w-full shrink-0"
+      aria-hidden="true"
+    />
+
     <!-- Loading skeleton -->
     <div v-if="pending" class="space-y-3" aria-busy="true" aria-label="Loading jobs">
       <div
@@ -605,5 +750,70 @@ function toggleCategory(id: string) {
         <span v-if="!hasActiveFilters" class="mt-2 block text-slate-600">Click “Sync jobs” to load listings.</span>
       </p>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="contributeDialogOpen"
+        class="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="jobs-contribute-title"
+      >
+        <button
+          type="button"
+          class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          aria-label="Close dialog"
+          @click="closeContributeDialog()"
+        />
+        <div
+          class="relative z-[101] w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-black/50"
+          @click.stop
+        >
+          <h2 id="jobs-contribute-title" class="text-lg font-semibold text-white">
+            Enjoying God Jobs?
+          </h2>
+          <p class="mt-2 text-sm leading-relaxed text-slate-400">
+            Star the repo, sponsor development, or open a PR—your support keeps this board improving.
+          </p>
+          <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <a
+              :href="REPO_URL"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex flex-1 items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-500"
+              @click="closeContributeDialog()"
+            >
+              Star &amp; contribute
+            </a>
+            <a
+              :href="SPONSOR_URL"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex flex-1 items-center justify-center rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-100 hover:bg-slate-800"
+              @click="closeContributeDialog()"
+            >
+              Sponsor on GitHub
+            </a>
+          </div>
+          <div class="mt-4 flex flex-col gap-2 border-t border-slate-800 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              type="button"
+              class="text-left text-sm text-slate-500 underline decoration-slate-600 underline-offset-2 hover:text-slate-300"
+              disabled
+              @click="closeContributeDialog({ permanent: true })"
+            >
+              Don&apos;t show this again
+            </button>
+            <button
+              type="button"
+              class="text-sm text-slate-400 hover:text-white"
+              @click="closeContributeDialog()"
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
