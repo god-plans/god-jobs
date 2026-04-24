@@ -32,12 +32,12 @@ export function useJobs() {
   }
 
   async function sync(body?: {
-    sources?: ('remotive' | 'arbeitnow' | 'hn' | 'remoteok' | 'rss')[]
+    sources?: ('remotive' | 'arbeitnow' | 'hn' | 'remoteok' | 'rss' | 'jobicy' | 'greenhouse')[]
     query?: string
     hnHitsPerPage?: number
     rssFeedUrls?: string[]
   }) {
-    return await $fetch<{ result: Record<string, { ok: boolean; count?: number; error?: string }>; syncedAt: string }>(
+    return await $fetch<{ result: Record<string, { ok: boolean; count?: number; error?: string; note?: string }>; syncedAt: string }>(
       '/api/jobs/sync',
       { method: 'POST', body: body ?? {} },
     )

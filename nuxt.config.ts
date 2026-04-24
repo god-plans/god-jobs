@@ -34,6 +34,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     /** Newline- or comma-separated RSS/Atom URLs (e.g. RSSHub `…/telegram/channel/:username`). Override with env `NUXT_JOBS_RSS_FEEDS`. */
     jobsRssFeeds: '',
+    /** Comma-separated Greenhouse board tokens, or keyword `curated` for a built-in pack. Env: `NUXT_JOBS_GREENHOUSE_BOARDS`. */
+    jobsGreenhouseBoards: '',
+    /** Optional URL to a plain-text list of board tokens (one per line; `#` comments ok). Env: `NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL`. */
+    jobsGreenhouseBoardListUrl: '',
     public: {
       /** Public site origin (no trailing slash). Used for canonical URLs, Open Graph, and sitemap. Set via `NUXT_PUBLIC_SITE_URL`. */
       siteUrl: '',

@@ -2,7 +2,18 @@
   "name": "god-jobs",
   "description": "God Jobs is a job board for the best jobs in the world.",
   "type": "module",
-  "private": true,
+  "private": false,
+  "author": "Parsa Jiravand",
+  "license": "MIT",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/god-plans/god-jobs"
+  },
+  "bugs": {
+    "url": "https://github.com/god-plans/god-jobs/issues"
+  },
+  "homepage": "https://github.com/god-plans/god-jobs#readme",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",

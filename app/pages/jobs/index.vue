@@ -140,9 +140,12 @@ async function runSync() {
   syncing.value = true
   try {
     const res = await sync({})
-    const parts = Object.entries(res.result).map(([k, v]) =>
-      v.ok ? `${k}: ${v.count ?? 0}` : `${k}: error ${v.error}`,
-    )
+    const parts = Object.entries(res.result).map(([k, v]) => {
+      if (!v.ok)
+        return `${k}: error ${v.error}`
+      const note = 'note' in v && v.note ? ` (${v.note})` : ''
+      return `${k}: ${v.count ?? 0}${note}`
+    })
     syncMsg.value = parts.join(' · ')
     await refresh()
   }
@@ -167,6 +170,8 @@ function sourcePillClass(src: string) {
     hn: 'bg-orange-500/20 text-orange-200 ring-orange-500/35',
     remoteok: 'bg-sky-500/20 text-sky-200 ring-sky-500/35',
     rss: 'bg-emerald-500/20 text-emerald-200 ring-emerald-500/35',
+    jobicy: 'bg-fuchsia-500/20 text-fuchsia-200 ring-fuchsia-500/35',
+    greenhouse: 'bg-lime-500/15 text-lime-200 ring-lime-500/35',
   }
   return map[src] ?? 'bg-slate-700/50 text-slate-300 ring-slate-600'
 }
@@ -354,9 +359,11 @@ onBeforeUnmount(() => {
             <span class="underline decoration-emerald-500/40 underline-offset-2">About sources &amp; export</span>
           </summary>
           <p class="mt-2 max-w-2xl leading-relaxed">
-            Remotive, Arbeitnow, Remote OK, filtered HN Algolia, and optional RSS (e.g. Telegram via
+            Built-in APIs: Remotive, Arbeitnow, Remote OK, Jobicy (remote), filtered HN Algolia, and RSS/Atom (e.g. Telegram via
             <a href="https://github.com/DIYgod/RSSHub" class="text-emerald-500 hover:text-emerald-400" target="_blank" rel="noopener noreferrer">RSSHub</a>).
+            Greenhouse has no “all companies” API—only per-board URLs. Set <code class="rounded bg-slate-800 px-1 text-xs text-slate-300">NUXT_JOBS_GREENHOUSE_BOARDS</code> to comma-separated <code class="rounded bg-slate-800 px-1 text-xs text-slate-300">boards.greenhouse.io/{token}</code> slugs, or use <code class="rounded bg-slate-800 px-1 text-xs text-slate-300">curated</code> to merge a built-in verified pack, or <code class="rounded bg-slate-800 px-1 text-xs text-slate-300">NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL</code> for a hosted text list of tokens.
             Without <code class="rounded bg-slate-800 px-1 text-xs text-slate-300">NUXT_JOBS_RSS_FEEDS</code>, RSS sync uses a default public feed (We Work Remotely).
+            LinkedIn and most large job sites do not offer a stable public API for open aggregation; use RSS where a site publishes a feed, or route listings you are allowed to republish through your own connector.
           </p>
           <p class="mt-2 flex flex-wrap gap-3">
             <a href="/api/export/jobs" class="text-emerald-500 hover:text-emerald-400">Download JSON</a>
@@ -451,6 +458,12 @@ onBeforeUnmount(() => {
               </option>
               <option value="rss">
                 RSS
+              </option>
+              <option value="jobicy">
+                Jobicy
+              </option>
+              <option value="greenhouse">
+                Greenhouse
               </option>
             </select>
           </div>

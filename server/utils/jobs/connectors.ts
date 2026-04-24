@@ -3,10 +3,16 @@ import Parser from 'rss-parser'
 import { hnTitleLooksLikeJobPost } from './hn-filter'
 import { stripHtml, truncate } from './text'
 import type { NewJobListing } from './types'
+import { JOBS_FETCH_UA as UA } from './http-constants'
 
-const UA = 'god-jobs-outreach/1.0 (local dev; contact via product)'
-
-export type JobSourceId = 'remotive' | 'arbeitnow' | 'hn' | 'remoteok' | 'rss'
+export type JobSourceId =
+  | 'remotive'
+  | 'arbeitnow'
+  | 'hn'
+  | 'remoteok'
+  | 'rss'
+  | 'jobicy'
+  | 'greenhouse'
 
 const rssParser = new Parser({
   timeout: 25000,
@@ -150,6 +156,114 @@ export async function fetchRemoteOkJobs(): Promise<NewJobListing[]> {
 }
 
 /** RSS or Atom feeds — Telegram via RSSHub, job-board RSS, etc. Uses `fetch` + parse (not `parseURL`) for consistent UA/TLS. */
+/** Jobicy — remote jobs JSON API (see https://jobicy.com/api/v2/remote-jobs). `count` must be 1–100. */
+export async function fetchJobicyJobs(count = 100): Promise<NewJobListing[]> {
+  const capped = Math.min(100, Math.max(1, count))
+  const u = new URL('https://jobicy.com/api/v2/remote-jobs')
+  u.searchParams.set('count', String(capped))
+  const res = await fetch(u.toString(), {
+    headers: { 'User-Agent': UA, Accept: 'application/json' },
+  })
+  const text = await res.text()
+  if (!res.ok) {
+    let detail = ''
+    try {
+      const errBody = JSON.parse(text) as { error?: string; message?: string }
+      detail = (typeof errBody.error === 'string' && errBody.error) || (typeof errBody.message === 'string' && errBody.message) || ''
+    }
+    catch {
+      /* ignore */
+    }
+    throw new Error(detail ? `Jobicy HTTP ${res.status}: ${detail}` : `Jobicy HTTP ${res.status}`)
+  }
+  const data = JSON.parse(text) as { jobs?: Record<string, unknown>[]; success?: boolean; error?: string }
+  if (data.success === false && typeof data.error === 'string' && data.error)
+    throw new Error(`Jobicy: ${data.error}`)
+  const jobs = data.jobs ?? []
+  const out: NewJobListing[] = []
+  for (const job of jobs) {
+    const id = job.id != null ? String(job.id) : null
+    const url = typeof job.url === 'string' ? job.url : ''
+    const title = typeof job.jobTitle === 'string' ? job.jobTitle : 'Untitled'
+    if (!id || !url) continue
+    const excerpt = typeof job.jobExcerpt === 'string' ? job.jobExcerpt : ''
+    const desc = typeof job.jobDescription === 'string' ? job.jobDescription : ''
+    const geo = typeof job.jobGeo === 'string' ? job.jobGeo : null
+    const pub = typeof job.pubDate === 'string' ? job.pubDate : null
+    out.push({
+      source: 'jobicy',
+      externalId: id,
+      title,
+      company: typeof job.companyName === 'string' ? job.companyName : null,
+      url,
+      location: geo,
+      remote: true,
+      postedAt: pub,
+      snippet: truncate(stripHtml(excerpt || desc)),
+      rawJson: JSON.stringify(job),
+    })
+  }
+  return out
+}
+
+/**
+ * Greenhouse public job board API — one request per board token.
+ * Tokens are the path segment in `https://boards.greenhouse.io/{token}` (e.g. `stripe`).
+ * Failed boards are skipped; warnings list human-readable errors.
+ */
+export async function fetchGreenhouseJobs(boardTokens: string[]): Promise<{ rows: NewJobListing[]; warnings: string[] }> {
+  const tokens = [...new Set(boardTokens.map((t) => t.trim()).filter(Boolean))]
+  const out: NewJobListing[] = []
+  const warnings: string[] = []
+  for (const board of tokens) {
+    try {
+      const apiUrl = `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(board)}/jobs`
+      const res = await fetch(apiUrl, {
+        headers: { 'User-Agent': UA, Accept: 'application/json' },
+      })
+      if (!res.ok) {
+        warnings.push(`"${board}": HTTP ${res.status}`)
+        continue
+      }
+      const data = (await res.json()) as { jobs?: Record<string, unknown>[]; error?: string }
+      if (!Array.isArray(data.jobs)) {
+        warnings.push(`"${board}": ${data.error ?? 'unexpected response'}`)
+        continue
+      }
+      for (const job of data.jobs) {
+        const id = job.id != null ? String(job.id) : null
+        const url = typeof job.absolute_url === 'string' ? job.absolute_url : ''
+        const title = typeof job.title === 'string' ? job.title : 'Untitled'
+        if (!id || !url) continue
+        const loc = job.location && typeof job.location === 'object' && job.location !== null
+          && typeof (job.location as { name?: string }).name === 'string'
+          ? (job.location as { name: string }).name
+          : null
+        const company = typeof job.company_name === 'string' ? job.company_name : null
+        const published = typeof job.first_published === 'string' ? job.first_published : null
+        const updated = typeof job.updated_at === 'string' ? job.updated_at : null
+        const desc = typeof job.content === 'string' ? job.content : ''
+        out.push({
+          source: 'greenhouse',
+          externalId: `${board}:${id}`,
+          title,
+          company,
+          url,
+          location: loc,
+          remote: /remote/i.test(title) || /remote/i.test(loc ?? '') || /remote/i.test(desc),
+          postedAt: published ?? updated,
+          snippet: desc ? truncate(stripHtml(desc)) : null,
+          rawJson: JSON.stringify(job),
+        })
+      }
+    }
+    catch (e: unknown) {
+      warnings.push(`"${board}": ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+  return { rows: out, warnings }
+}
+
 export async function fetchRssFeedJobs(feedUrls: string[]): Promise<NewJobListing[]> {
   const urls = [...new Set(feedUrls.map((u) => u.trim()).filter(Boolean))]
   const out: NewJobListing[] = []
