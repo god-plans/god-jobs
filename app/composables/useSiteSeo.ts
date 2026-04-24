@@ -27,6 +27,7 @@ export function useSiteSeo(opts: {
     ogTitle: opts.title,
     ogDescription: opts.description,
     ogType: 'website',
+    ...(base ? { ogSiteName: 'God Jobs' } : {}),
     ...(absolute ? { ogUrl: absolute } : {}),
     ...(ogImage ? { ogImage, twitterImage: ogImage } : {}),
     twitterCard: 'summary_large_image',

@@ -3,9 +3,9 @@ import type { JobListing } from '~~/shared/job'
 import { JOB_CATEGORY_PRESETS } from '~~/shared/jobCategoryPresets'
 
 useSiteSeo({
-  title: 'Job board',
+  title: 'Job board — Search remote & on-site jobs',
   description:
-    'Search curated job posts from multiple feeds—filter by keyword, company, location, remote or on-site, and category. Open each listing at the source.',
+    'Browse aggregated job posts from Remotive, Remote OK, Arbeitnow, Jobicy, Hacker News, Greenhouse, and RSS. Filter by keyword, company, location, remote or on-site work, category, and source—every row links to the original listing.',
   path: '/jobs',
   indexable: true,
 })

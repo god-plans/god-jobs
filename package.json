@@ -1,6 +1,6 @@
 {
   "name": "god-jobs",
-  "description": "God Jobs is a job board for the best jobs in the world.",
+  "description": "Open-source Nuxt 4 job board: aggregate remote and on-site jobs from Remotive, Remote OK, Arbeitnow, Jobicy, HN, Greenhouse, and RSS. SQLite, self-hosted.",
   "type": "module",
   "private": false,
   "author": "Parsa Jiravand",

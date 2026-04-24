@@ -7,9 +7,14 @@ function escapeXmlUrl(loc: string) {
 
 export default defineEventHandler((event) => {
   const base = getPublicSiteUrl(event).replace(/\/$/, '')
-  const locs = [`${base}/`, `${base}/jobs`]
-  const urls = locs.map(loc =>
-    `  <url><loc>${escapeXmlUrl(loc)}</loc><changefreq>weekly</changefreq></url>`,
+  const lastmod = new Date().toISOString().slice(0, 10)
+  const entries: { loc: string; changefreq: string; priority: string }[] = [
+    { loc: `${base}/`, changefreq: 'weekly', priority: '1.0' },
+    { loc: `${base}/jobs`, changefreq: 'daily', priority: '0.9' },
+  ]
+  const urls = entries.map(
+    e =>
+      `  <url><loc>${escapeXmlUrl(e.loc)}</loc><lastmod>${lastmod}</lastmod><changefreq>${e.changefreq}</changefreq><priority>${e.priority}</priority></url>`,
   )
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

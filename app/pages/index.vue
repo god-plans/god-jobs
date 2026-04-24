@@ -1,10 +1,48 @@
 <script setup lang="ts">
 useSiteSeo({
-  title: 'Home',
+  title: 'Open-source job board & feed aggregator',
   description:
-    'God Jobs aggregates remote and on-site roles from trusted feeds—search by role, company, and workplace, then open listings at the source.',
+    'Search remote jobs and on-site roles in one place. God Jobs aggregates listings from Remotive, Remote OK, Arbeitnow, Jobicy, Hacker News, optional Greenhouse boards, and RSS—filter by keyword, company, location, and workplace; open each post at the source.',
   path: '/',
   indexable: true,
+})
+
+const config = useRuntimeConfig()
+const siteBase = computed(() => String(config.public.siteUrl ?? '').trim().replace(/\/$/, ''))
+
+const websiteJsonLd = computed(() => {
+  const base = siteBase.value
+  if (!base)
+    return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'God Jobs',
+    url: base,
+    description:
+      'Open-source job board aggregating remote and on-site listings from public APIs and RSS. Search and filter roles; apply at each employer’s original listing.',
+    publisher: {
+      '@type': 'Organization',
+      name: 'God Jobs',
+      url: base,
+    },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${base}/jobs?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  }
+})
+
+useHead({
+  script: computed(() =>
+    websiteJsonLd.value
+      ? [{ type: 'application/ld+json', key: 'ld-json-website', children: JSON.stringify(websiteJsonLd.value) }]
+      : [],
+  ),
 })
 </script>
 

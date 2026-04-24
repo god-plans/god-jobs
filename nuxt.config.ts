@@ -54,6 +54,7 @@ export default defineNuxtConfig({
       ],
       meta: [
         { name: 'theme-color', content: '#020617' },
+        { property: 'og:locale', content: 'en_US' },
       ],
     },
   },
