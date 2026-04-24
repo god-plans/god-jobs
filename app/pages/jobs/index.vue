@@ -21,6 +21,8 @@ const category = ref('')
 const sortField = ref<'updatedAt' | 'postedAt'>('updatedAt')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 const moreFiltersOpen = ref(false)
+const mobileFiltersOpen = ref(false)
+const jobsSearchInputRef = ref<HTMLInputElement | null>(null)
 const page = ref(1)
 const pageSize = ref(50)
 
@@ -48,6 +50,23 @@ watch(
 
 watch(pageSize, () => {
   page.value = 1
+})
+
+watch(mobileFiltersOpen, (open) => {
+  if (!import.meta.client) return
+  document.documentElement.classList.toggle('overflow-hidden', open)
+  if (mobileFiltersEscapeHandler) {
+    window.removeEventListener('keydown', mobileFiltersEscapeHandler)
+    mobileFiltersEscapeHandler = null
+  }
+  if (open) {
+    nextTick(() => jobsSearchInputRef.value?.focus())
+    mobileFiltersEscapeHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape')
+        mobileFiltersOpen.value = false
+    }
+    window.addEventListener('keydown', mobileFiltersEscapeHandler)
+  }
 })
 
 const { data, pending, refresh, error } = await useAsyncData(
@@ -246,6 +265,7 @@ function closeContributeDialog(options?: { permanent?: boolean }) {
 }
 
 let escapeKeyHandler: ((e: KeyboardEvent) => void) | null = null
+let mobileFiltersEscapeHandler: ((e: KeyboardEvent) => void) | null = null
 
 watch(contributeDialogOpen, (open) => {
   if (!import.meta.client) return
@@ -290,9 +310,19 @@ onMounted(() => {
     { root: null, rootMargin: '0px', threshold: 0 },
   )
   resultsObserver.observe(el)
+
+  //sync jobs
+  runSync()
 })
 
 onBeforeUnmount(() => {
+  if (import.meta.client) {
+    document.documentElement.classList.remove('overflow-hidden')
+    if (mobileFiltersEscapeHandler) {
+      window.removeEventListener('keydown', mobileFiltersEscapeHandler)
+      mobileFiltersEscapeHandler = null
+    }
+  }
   if (escapeKeyHandler) {
     window.removeEventListener('keydown', escapeKeyHandler)
     escapeKeyHandler = null
@@ -303,7 +333,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 pb-24 md:pb-0">
     <!-- Hero -->
     <div class="flex flex-col gap-4 border-b border-slate-800/80 pb-6 sm:flex-row sm:items-start sm:justify-between">
       <div class="min-w-0 flex-1 space-y-2">
@@ -337,10 +367,10 @@ onBeforeUnmount(() => {
           Last row update: {{ data.meta.lastSync }} · Total matching: {{ data.meta.total }}
         </p>
       </div>
-      <div class="flex shrink-0 flex-wrap gap-2">
+      <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
         <button
           type="button"
-          class="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 disabled:opacity-50"
+          class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 disabled:opacity-50 sm:w-auto"
           :disabled="syncing"
           @click="runSync"
         >
@@ -348,7 +378,7 @@ onBeforeUnmount(() => {
         </button>
         <button
           type="button"
-          class="rounded-lg border border-slate-600 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-800"
+          class="w-full rounded-lg border border-slate-600 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-800 sm:w-auto"
           @click="refresh()"
         >
           Refresh
@@ -363,25 +393,46 @@ onBeforeUnmount(() => {
       {{ error.message }}
     </p>
 
-    <!-- Toolbar row 1 -->
-    <div class="sticky top-0 z-10 space-y-3 rounded-xl border border-slate-800 bg-slate-950/95 p-4 shadow-xl shadow-black/20 backdrop-blur sm:p-5">
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div class="min-w-0 flex-1">
+    <!-- Filters: mobile opens as full-screen sheet; md+ sticky toolbar -->
+    <div
+      id="jobs-filters-panel"
+      class="flex-col space-y-3 rounded-xl border border-slate-800 bg-slate-950/95 shadow-xl shadow-black/20 backdrop-blur max-md:fixed max-md:inset-0 max-md:z-[60] max-md:overflow-y-auto max-md:overscroll-y-contain max-md:p-4 max-md:pb-8 md:sticky md:top-0 md:z-10 md:max-h-none md:overflow-visible md:p-5"
+      :class="mobileFiltersOpen ? 'flex' : 'hidden md:flex'"
+      role="region"
+      aria-label="Job search and filters"
+    >
+      <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-800 pb-3 md:hidden">
+        <h2 class="text-base font-semibold text-white">
+          Search &amp; filters
+        </h2>
+        <button
+          type="button"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+          @click="mobileFiltersOpen = false"
+        >
+          Done
+        </button>
+      </div>
+
+      <div class="flex w-full shrink-0 flex-col gap-3 lg:flex-row lg:items-center lg:gap-3">
+        <div class="min-w-0 w-full lg:flex-1">
           <label class="sr-only" for="jobs-search">Search</label>
           <input
             id="jobs-search"
+            ref="jobsSearchInputRef"
             v-model="q"
             type="search"
+            enterkeyhint="search"
             placeholder="Search title, company, snippet…"
-            class="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+            class="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-base text-white placeholder:text-slate-500 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 md:text-sm"
           >
         </div>
-        <div class="flex flex-wrap gap-2 sm:gap-3">
-          <div class="flex min-w-[10rem] flex-1 flex-col gap-1 sm:min-w-0 sm:max-w-[11rem]">
+        <div class="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3 lg:flex-1 lg:min-w-0 lg:justify-end">
+          <div class="flex w-full min-w-0 flex-col gap-1 sm:w-[calc(50%-0.375rem)] sm:max-w-[11rem] md:w-auto md:max-w-[11rem]">
             <label class="text-xs font-medium uppercase tracking-wide text-slate-500">Source</label>
             <select
               v-model="source"
-              class="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
+              class="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-base text-white md:text-sm"
             >
               <option value="">
                 All sources
@@ -403,11 +454,11 @@ onBeforeUnmount(() => {
               </option>
             </select>
           </div>
-          <div class="flex min-w-[10rem] flex-1 flex-col gap-1 sm:min-w-0 sm:max-w-[11rem]">
+          <div class="flex w-full min-w-0 flex-col gap-1 sm:w-[calc(50%-0.375rem)] sm:max-w-[11rem] md:w-auto md:max-w-[11rem]">
             <label class="text-xs font-medium uppercase tracking-wide text-slate-500">Workplace</label>
             <select
               v-model="workplace"
-              class="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
+              class="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-base text-white md:text-sm"
             >
               <option value="any">
                 Any
@@ -420,12 +471,12 @@ onBeforeUnmount(() => {
               </option>
             </select>
           </div>
-          <div class="flex min-w-[9rem] flex-col gap-1">
+          <div class="flex w-full min-w-0 flex-col gap-1 sm:w-full sm:max-w-none md:max-w-[14rem] lg:w-auto lg:min-w-[9rem]">
             <label class="text-xs font-medium uppercase tracking-wide text-slate-500">Sort</label>
-            <div class="flex gap-1">
+            <div class="flex w-full gap-2">
               <select
                 v-model="sortField"
-                class="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-2 py-2 text-sm text-white"
+                class="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-2 py-2 text-base text-white md:text-sm"
               >
                 <option value="updatedAt">
                   Updated
@@ -436,7 +487,7 @@ onBeforeUnmount(() => {
               </select>
               <select
                 v-model="sortOrder"
-                class="w-20 shrink-0 rounded-lg border border-slate-700 bg-slate-900 px-2 py-2 text-sm text-white"
+                class="w-[5.5rem] shrink-0 rounded-lg border border-slate-700 bg-slate-900 px-2 py-2 text-base text-white md:w-20 md:text-sm"
               >
                 <option value="desc">
                   Desc
@@ -451,7 +502,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Category chips -->
-      <div>
+      <div class="w-full min-w-0 shrink-0">
         <p class="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
           Category
         </p>
@@ -475,66 +526,98 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- More filters -->
-      <div>
+      <div class="w-full min-w-0 shrink-0">
         <button
           type="button"
-          class="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200"
+          class="flex w-full items-center gap-2 rounded-lg py-1 text-left text-sm text-slate-400 hover:text-slate-200"
           :aria-expanded="moreFiltersOpen"
           @click="moreFiltersOpen = !moreFiltersOpen"
         >
-          <span class="select-none">{{ moreFiltersOpen ? '▼' : '▶' }}</span>
-          More filters (company, location, posted dates)
+          <span class="select-none shrink-0">{{ moreFiltersOpen ? '▼' : '▶' }}</span>
+          <span class="min-w-0">More filters (company, location, posted dates)</span>
         </button>
-        <div v-show="moreFiltersOpen" class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="flex flex-col gap-1">
+        <div
+          v-show="moreFiltersOpen"
+          class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <div class="flex min-w-0 w-full flex-col gap-1">
             <label class="text-xs text-slate-500" for="f-company">Company contains</label>
             <input
               id="f-company"
               v-model="company"
               type="text"
               autocomplete="organization"
-              class="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
+              class="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-base text-white md:text-sm"
               placeholder="e.g. godplans"
             >
           </div>
-          <div class="flex flex-col gap-1">
+          <div class="flex min-w-0 w-full flex-col gap-1">
             <label class="text-xs text-slate-500" for="f-location">Location contains</label>
             <input
               id="f-location"
               v-model="location"
               type="text"
-              class="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
+              class="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-base text-white md:text-sm"
               placeholder="e.g. Germany"
             >
           </div>
-          <div class="flex flex-col gap-1">
+          <div class="flex min-w-0 w-full flex-col gap-1">
             <label class="text-xs text-slate-500" for="f-after">Posted on or after</label>
             <input
               id="f-after"
               v-model="postedAfter"
               type="date"
-              class="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
+              class="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-base text-white md:py-2 md:text-sm"
             >
           </div>
-          <div class="flex flex-col gap-1">
+          <div class="flex min-w-0 w-full flex-col gap-1">
             <label class="text-xs text-slate-500" for="f-before">Posted on or before</label>
             <input
               id="f-before"
               v-model="postedBefore"
               type="date"
-              class="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white"
+              class="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-base text-white md:py-2 md:text-sm"
             >
           </div>
         </div>
       </div>
 
-      <div v-if="hasActiveFilters" class="flex justify-end border-t border-slate-800/80 pt-3">
+      <div v-if="hasActiveFilters" class="flex w-full shrink-0 justify-end border-t border-slate-800/80 pt-3">
         <button
           type="button"
           class="text-sm text-slate-400 underline decoration-slate-600 underline-offset-2 hover:text-white"
           @click="clearFilters"
         >
           Clear all filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile: fixed entry to search & filters (thumb-friendly) -->
+    <div
+      v-show="!mobileFiltersOpen"
+      class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-800 bg-slate-950/95 shadow-[0_-12px_40px_rgba(0,0,0,0.35)] backdrop-blur md:hidden"
+      style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))"
+    >
+      <div class="mx-auto max-w-6xl px-4 pt-3">
+        <button
+          type="button"
+          class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 bg-slate-900 py-3.5 text-sm font-medium text-white hover:bg-slate-800 active:bg-slate-800/90"
+          aria-haspopup="dialog"
+          :aria-expanded="mobileFiltersOpen"
+          aria-controls="jobs-filters-panel"
+          @click="mobileFiltersOpen = true"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-emerald-400" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+          <span>Search &amp; filters</span>
+          <span
+            v-if="hasActiveFilters"
+            class="rounded-full bg-emerald-600/90 px-2 py-0.5 text-xs font-semibold text-white"
+          >
+            Active
+          </span>
         </button>
       </div>
     </div>
@@ -796,14 +879,14 @@ onBeforeUnmount(() => {
             </a>
           </div>
           <div class="mt-4 flex flex-col gap-2 border-t border-slate-800 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <button
+            <!-- <button
               type="button"
               class="text-left text-sm text-slate-500 underline decoration-slate-600 underline-offset-2 hover:text-slate-300"
               disabled
               @click="closeContributeDialog({ permanent: true })"
             >
               Don&apos;t show this again
-            </button>
+            </button> -->
             <button
               type="button"
               class="text-sm text-slate-400 hover:text-white"
