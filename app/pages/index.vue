@@ -56,7 +56,7 @@ useHead({
 <template>
   <div class="w-full space-y-20">
     <!-- Hero -->
-    <section class="gj-hero relative overflow-hidden px-6 py-14 sm:px-10 sm:py-20">
+    <section class=" relative overflow-hidden px-6 py-14 sm:px-10 sm:py-20">
       <div
         class="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl"
         aria-hidden="true"

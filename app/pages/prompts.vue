@@ -74,7 +74,7 @@ async function copy(text: string, key: string) {
 </script>
 
 <template>
-  <div class="space-y-10">
+  <div class="space-y-10 lg:p-8 p-4">
     <div>
       <div class="flex flex-wrap items-center gap-3">
         <AppLogo :as-link="false" size="sm" :show-wordmark="false" />

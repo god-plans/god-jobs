@@ -29,7 +29,7 @@ useHead({
   <div class="gj-app-root">
     <header class="gj-header">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        <div class="min-w-0 shrink">
+        <div class="min-w-0 shrink ">
           <AppLogo />
         </div>
         <nav class="hidden min-w-0 flex-1 items-center justify-end gap-1 text-sm md:flex md:gap-2 lg:gap-4" aria-label="Main">
@@ -256,8 +256,8 @@ useHead({
         </nav>
       </div>
     </header>
-    <main class="py-8">
-      <GkContainer max-width="full" :padded="true" class="mx-auto max-w-6xl">
+    <main >
+      <GkContainer max-width="full" :padded="true" class="mx-auto max-w-6xl !px-0">
         <slot />
       </GkContainer>
     </main>

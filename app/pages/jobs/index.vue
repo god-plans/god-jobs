@@ -5,15 +5,13 @@ import {
   GkAlert,
   GkBottomSheet,
   GkButton,
+  GkDataTable,
   GkDialog,
   GkExpansionPanel,
   GkExpansionPanels,
   GkExpansionPanelText,
   GkExpansionPanelTitle,
-  GkField,
-  GkPagination,
   GkSelect,
-  GkSkeletonLoader,
   pushGkSnackbar,
 } from 'god-kit/vue'
 
@@ -129,8 +127,6 @@ const { data, pending, refresh, error } = await useAsyncData(
 
 const total = computed(() => data.value?.meta?.total ?? 0)
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
-const showingFrom = computed(() => (total.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1))
-const showingTo = computed(() => Math.min(page.value * pageSize.value, total.value))
 
 const hasActiveFilters = computed(() => {
   return Boolean(
@@ -214,13 +210,44 @@ function sourcePillClass(src: string) {
   return map[src] ?? 'bg-slate-500/20 text-slate-300 ring-1 ring-inset ring-slate-500/30'
 }
 
-const pageSizeOptions = [
-  { value: 25, label: '25' },
-  { value: 50, label: '50' },
-  { value: 80, label: '80' },
-  { value: 100, label: '100' },
-  { value: 200, label: '200' },
+const jobTableHeaders = [
+  { key: 'source', title: 'Source', sortable: false },
+  { key: 'title', title: 'Title', sortable: false },
+  { key: 'company', title: 'Company', sortable: false },
+  { key: 'remote', title: 'Remote', sortable: false },
+  { key: 'location', title: 'Location', sortable: false },
+  { key: 'updatedAt', title: 'Updated', sortable: true },
+  { key: 'postedAt', title: 'Posted', sortable: true },
 ] as const
+
+const jobTableItems = computed(() =>
+  (data.value?.jobs ?? []).map((job) => ({
+    id: job.id,
+    source: job.source,
+    title: job.title,
+    company: job.company ?? '—',
+    remote: remoteLabel(job),
+    location: job.location ?? '—',
+    updatedAt: job.updatedAt,
+    postedAt: job.postedAt,
+    snippet: job.snippet,
+    url: job.url,
+  })),
+)
+
+/** Binds GkDataTable sort UI to API filter state (updatedAt / postedAt only). */
+const tableSortBy = computed({
+  get: () => [{ key: filters.sortField, order: filters.sortOrder as 'asc' | 'desc' }],
+  set: (v) => {
+    const first = v[0]
+    if (first && (first.key === 'updatedAt' || first.key === 'postedAt')) {
+      filters.sortField = first.key
+      filters.sortOrder = first.order
+    }
+  },
+})
+
+const jobTableItemsPerPageOptions = [25, 50, 80, 100, 200] as const
 
 const REPO_URL = 'https://github.com/god-plans/god-jobs'
 const SPONSOR_URL = 'https://github.com/sponsors/parsajiravand'
@@ -343,7 +370,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-24 md:pb-0">
+  <div class="space-y-6 pb-24 md:pb-0 lg:p-8 p-4">
     <!-- Hero -->
     <div class="flex flex-col gap-4 border-b pb-6" style="border-color: var(--gk-color-border)">
       <div class="min-w-0 flex-1 space-y-2">
@@ -475,181 +502,90 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- Pagination + page size -->
-    <div
-      class="gj-surface gj-surface--raised gj-pagination-bar flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <p class="text-sm sm:shrink-0 sm:self-center" style="color: var(--gk-color-on-surface-variant)">
-        <span v-if="total > 0">Showing {{ showingFrom }}–{{ showingTo }} of {{ total }}</span>
-        <span v-else>No matching rows</span>
-      </p>
-      <div class="flex min-w-0 flex-col gap-4 sm:flex-1 sm:flex-row sm:items-end sm:justify-end sm:gap-0">
-        <div class="flex w-full min-w-0 items-center gap-3 sm:max-w-[15rem] sm:justify-end">
-          <span id="jobs-page-size-label" class="gj-per-page-label">Per page</span>
-          <GkField label-sr-only label="Page size" class="gj-per-page-field min-w-0 flex-1 !mb-0">
-            <GkSelect
-              v-model="pageSize"
-              :options="[...pageSizeOptions]"
-              aria-labelledby="jobs-page-size-label"
-              aria-label="Page size"
-            />
-          </GkField>
-        </div>
-        <div class="gj-pagination-bar__pages w-full min-w-0 sm:w-auto">
-          <GkPagination
-            v-model="page"
-            :length="pageCount"
-            :disabled="pending"
-            :total-visible="7"
-            class="w-full sm:w-auto"
-          />
-        </div>
-      </div>
-    </div>
-
     <div
       ref="resultsSentinel"
       class="pointer-events-none h-1 w-full shrink-0"
       aria-hidden="true"
     />
 
-    <div v-if="pending" class="space-y-3" aria-busy="true" aria-label="Loading jobs">
-      <div class="xl:hidden">
-        <GkSkeletonLoader v-for="n in 4" :key="`m-${n}`" type="card" loading :boilerplate="true" class="!mb-3" />
-      </div>
-      <div class="gj-surface gj-surface--raised hidden overflow-hidden xl:block">
-        <GkSkeletonLoader type="table" loading :boilerplate="true" />
-      </div>
-    </div>
-
-    <!-- Cards (mobile / tablet) -->
-    <div v-else class="space-y-3 xl:hidden">
-      <article
-        v-for="job in data?.jobs ?? []"
-        :key="`c-${job.source}-${job.externalId}`"
-        class="gj-surface p-4 shadow-sm transition-shadow hover:shadow-md"
+    <div class="gj-surface gj-surface--raised jobs-list-table-wrap overflow-hidden">
+      <GkDataTable
+        mode="server"
+        v-model:page="page"
+        v-model:items-per-page="pageSize"
+        v-model:sort-by="tableSortBy"
+        :headers="[...jobTableHeaders]"
+        :items="jobTableItems"
+        :items-length="total"
+        :loading="pending"
+        :items-per-page-options="[...jobTableItemsPerPageOptions]"
+        item-value="id"
+        caption="Job listings"
+        density="compact"
+        striped
+        mobile="auto"
+        fixed-header
+        :max-height="560"
+        :bordered="false"
+        class="jobs-gk-data-table"
       >
-        <div class="flex flex-wrap items-start justify-between gap-2">
-          <a
-            :href="job.url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-base font-medium leading-snug"
-            style="color: var(--gk-color-primary)"
-          >
-            {{ job.title }}
-          </a>
-        </div>
-        <div class="mt-2 flex flex-wrap items-center gap-2">
+        <template #item.source="{ item }">
           <span
             class="gj-pill inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
-            :class="sourcePillClass(job.source)"
+            :class="sourcePillClass(String(item.source ?? ''))"
           >
-            {{ job.source }}
+            {{ item.source }}
           </span>
-          <span class="text-sm" style="color: var(--gk-color-on-surface-variant)">{{ job.company || '—' }}</span>
-        </div>
-        <div class="mt-2 flex flex-wrap gap-2 text-xs" style="color: var(--gk-color-on-surface-variant)">
-          <span class="rounded-md px-2 py-0.5" style="background: var(--gk-color-surface)">{{ remoteLabel(job) }}</span>
-          <span v-if="job.location" class="rounded-md px-2 py-0.5" style="background: var(--gk-color-surface)">{{ job.location }}</span>
-          <span class="tabular-nums">{{ job.updatedAt?.slice(0, 16) }}</span>
-        </div>
-        <p v-if="job.snippet" class="mt-3 line-clamp-3 text-xs leading-relaxed" style="color: var(--gk-color-on-surface-variant)">
-          {{ job.snippet }}
-        </p>
-      </article>
-      <div
-        v-if="(data?.jobs?.length ?? 0) === 0"
-        class="rounded-[var(--gk-radius-lg)] border border-dashed px-6 py-12 text-center"
-        style="border-color: var(--gk-color-border)"
-      >
-        <p style="color: var(--gk-color-on-surface-variant)">
-          No jobs match these filters.
-        </p>
-        <p v-if="!hasActiveFilters" class="mt-2 text-sm" style="color: var(--gk-color-on-surface-variant)">
-          Sync first to load listings from external sources.
-        </p>
-        <GkButton type="button" class="mt-4" @click="runSync">
-          Sync jobs now
-        </GkButton>
-      </div>
-    </div>
-
-    <!-- Table (desktop xl+) -->
-    <div
-      v-if="!pending"
-      class="gj-surface gj-surface--raised hidden overflow-x-auto xl:block"
-    >
-      <table class="min-w-full divide-y text-left text-sm" style="color: var(--gk-color-on-surface)">
-        <thead class="text-xs uppercase tracking-wide" style="background: var(--gk-color-surface-elevated); color: var(--gk-color-on-surface-variant)">
-          <tr>
-            <th class="px-4 py-3">
-              Source
-            </th>
-            <th class="px-4 py-3">
-              Title
-            </th>
-            <th class="px-4 py-3">
-              Company
-            </th>
-            <th class="px-4 py-3">
-              Remote
-            </th>
-            <th class="px-4 py-3">
-              Location
-            </th>
-            <th class="px-4 py-3">
-              Updated
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y" style="border-color: var(--gk-color-border)">
-          <tr
-            v-for="job in data?.jobs ?? []"
-            :key="`t-${job.source}-${job.externalId}`"
-            class="gj-table-row"
+        </template>
+        <template #item.title="{ item }">
+          <div class="min-w-0 max-w-md">
+            <a
+              :href="String(item.url ?? '#')"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-medium"
+              style="color: var(--gk-color-primary)"
+            >
+              {{ item.title }}
+            </a>
+            <p
+              v-if="item.snippet"
+              class="mt-1 line-clamp-2 text-xs"
+              style="color: var(--gk-color-on-surface-variant)"
+            >
+              {{ item.snippet }}
+            </p>
+          </div>
+        </template>
+        <template #item.location="{ item }">
+          <span class="max-w-xs truncate" style="color: var(--gk-color-on-surface-variant)">{{ item.location ?? '—' }}</span>
+        </template>
+        <template #item.updatedAt="{ item }">
+          <span class="whitespace-nowrap text-xs tabular-nums" style="color: var(--gk-color-on-surface-variant)">
+            {{ typeof item.updatedAt === 'string' ? item.updatedAt.slice(0, 16) : '—' }}
+          </span>
+        </template>
+        <template #item.postedAt="{ item }">
+          <span class="whitespace-nowrap text-xs tabular-nums" style="color: var(--gk-color-on-surface-variant)">
+            {{ item.postedAt && typeof item.postedAt === 'string' ? item.postedAt.slice(0, 16) : '—' }}
+          </span>
+        </template>
+        <template #no-data>
+          <div
+            v-if="!pending"
+            class="rounded-md border border-dashed px-4 py-12 text-center text-sm"
+            style="color: var(--gk-color-on-surface-variant); border-color: var(--gk-color-border)"
           >
-            <td class="whitespace-nowrap px-4 py-3 align-top">
-              <span
-                class="gj-pill inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
-                :class="sourcePillClass(job.source)"
-              >
-                {{ job.source }}
-              </span>
-            </td>
-            <td class="max-w-md px-4 py-3 align-top">
-              <a
-                :href="job.url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="font-medium"
-                style="color: var(--gk-color-primary)"
-              >
-                {{ job.title }}
-              </a>
-              <p v-if="job.snippet" class="mt-1 line-clamp-2 text-xs" style="color: var(--gk-color-on-surface-variant)">
-                {{ job.snippet }}
-              </p>
-            </td>
-            <td class="px-4 py-3 align-top">
-              {{ job.company || '—' }}
-            </td>
-            <td class="px-4 py-3 align-top" style="color: var(--gk-color-on-surface-variant)">
-              {{ remoteLabel(job) }}
-            </td>
-            <td class="max-w-xs truncate px-4 py-3 align-top" style="color: var(--gk-color-on-surface-variant)">
-              {{ job.location || '—' }}
-            </td>
-            <td class="whitespace-nowrap px-4 py-3 align-top text-xs tabular-nums" style="color: var(--gk-color-on-surface-variant)">
-              {{ job.updatedAt?.slice(0, 16) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-if="(data?.jobs?.length ?? 0) === 0" class="px-4 py-12 text-center text-sm" style="color: var(--gk-color-on-surface-variant)">
-        No jobs match these filters.
-        <span v-if="!hasActiveFilters" class="mt-2 block" style="color: var(--gk-color-on-surface)">Click “Sync jobs” to load listings.</span>
-      </p>
+            <p>No jobs match these filters.</p>
+            <p v-if="!hasActiveFilters" class="mt-2" style="color: var(--gk-color-on-surface)">
+              Sync first to load listings from external sources, or click “Sync jobs” above.
+            </p>
+            <GkButton v-if="!hasActiveFilters" type="button" class="mt-4" @click="runSync">
+              Sync jobs now
+            </GkButton>
+          </div>
+        </template>
+      </GkDataTable>
     </div>
 
     <GkDialog
