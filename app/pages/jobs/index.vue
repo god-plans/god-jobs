@@ -392,7 +392,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-6 p-4 pb-24 md:pb-0 lg:px-8">
+  <div class="space-y-6 p-4 pb-32 md:pb-10 lg:px-8">
     <!-- Hero -->
     <div class="flex flex-col gap-4 border-b pb-6" style="border-color: var(--gk-color-border)">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -525,7 +525,7 @@ onBeforeUnmount(() => {
       <GkDataTable mode="server" v-model:page="page" v-model:items-per-page="pageSize" v-model:sort-by="tableSortBy"
         :headers="[...jobTableHeaders]" :items="jobTableItems" :items-length="total" :loading="pending"
         :items-per-page-options="[...jobTableItemsPerPageOptions]" hide-default-footer item-value="id"
-        caption="Job listings" density="comfortable" striped mobile="auto" fixed-header :max-height="'min(70vh, 40rem)'"
+        caption="Job listings" density="comfortable" striped mobile="auto" fixed-header :max-height="'min(78vh, 44rem)'"
         :bordered="false" class="jobs-gk-data-table">
         <template #item.source="{ item }">
           <span class="gj-pill inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"

@@ -1,20 +1,6 @@
 <script setup lang="ts">
-import { gkKitConfig } from '~/gk.config'
-import {
-  GkButton,
-  GkContainer,
-  GkFormControlsProvider,
-  GkSnackbarHost,
-} from 'god-kit/vue'
+import { GkButton, GkContainer, GkSnackbarHost } from 'god-kit/vue'
 import { useGkTheme } from 'god-kit/vue/config'
-
-/**
- * Re-provide `GK_FORM_CONTROLS` for the app shell. Nuxt/Vite can prebundle
- * `god-kit/vue` and `god-kit/vue/config` separately, so `Symbol` keys from
- * `createGkKit` in the plugin may not match `inject` in components. This keeps
- * `form.defaultControlSize` in step with `~/gk.config` (see `nuxt` `vite.ssr.noExternal` too).
- */
-const formControlSize = gkKitConfig.form?.defaultControlSize ?? 'md'
 
 const mobileNavOpen = ref(false)
 
@@ -43,6 +29,8 @@ const themeColor = computed(() =>
   theme.isDark.value ? '#020617' : '#f8fafc',
 )
 
+const footerYear = new Date().getFullYear()
+
 useHead({
   meta: [
     { name: 'theme-color', content: themeColor },
@@ -52,7 +40,6 @@ useHead({
 
 <template>
   <div class="gj-app-root">
-    <GkFormControlsProvider :size="formControlSize">
     <header class="gj-header">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
         <div class="min-w-0 shrink ">
@@ -282,12 +269,45 @@ useHead({
         </nav>
       </div>
     </header>
-    <main >
+    <main class="gj-main">
       <GkContainer max-width="full" :padded="true" class="mx-auto max-w-6xl !px-0">
         <slot />
       </GkContainer>
     </main>
+
+    <footer class="gj-footer" aria-label="Site">
+      <div class="gj-footer__inner mx-auto max-w-6xl px-4 py-10">
+        <p class="gj-footer__support text-sm leading-relaxed">
+          Support our open-source work — star the repos on GitHub and share feedback. It helps us keep shipping.
+        </p>
+        <ul class="gj-footer__links mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <li>
+            <a
+              class="gj-footer__link"
+              href="https://github.com/god-plans/god-kit"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              God Kit (design system)
+            </a>
+          </li>
+          <li>
+            <a
+              class="gj-footer__link"
+              href="https://github.com/god-plans"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              God Plans on GitHub
+            </a>
+          </li>
+        </ul>
+        <p class="gj-footer__meta mt-8 text-xs">
+          © {{ footerYear }} God Jobs · Part of the God Plans ecosystem.
+        </p>
+      </div>
+    </footer>
+
     <GkSnackbarHost />
-    </GkFormControlsProvider>
   </div>
 </template>
