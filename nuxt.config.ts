@@ -12,6 +12,12 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss'],
 
+  css: [
+    'god-kit/tokens.css',
+    'god-kit/vue.css',
+    '~/assets/css/god-jobs-gk.css',
+  ],
+
   /**
    * Netlify sets `NETLIFY` during build. Some sites set `SERVER_PRESET=netlify` in the UI instead.
    * CJS deps like papaparse can break Nitro's file tracer unless SSR bundles them.
@@ -53,7 +59,6 @@ export default defineNuxtConfig({
         { rel: 'apple-touch-icon', href: '/logo.png' },
       ],
       meta: [
-        { name: 'theme-color', content: '#020617' },
         { property: 'og:locale', content: 'en_US' },
       ],
     },

@@ -11,7 +11,7 @@ const props = withDefaults(
     asLink: true,
     size: 'md',
     showWordmark: true,
-    wordmarkClass: 'text-xl font-semibold tracking-tight text-white sm:text-2xl',
+    wordmarkClass: 'text-xl font-semibold tracking-tight sm:text-2xl text-[var(--gk-color-on-surface)]',
   },
 )
 

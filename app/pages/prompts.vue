@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { GkButton, GkField, GkGrid, GkInput, GkTextarea } from 'god-kit/vue'
 import {
   masterPrompt,
   deepAnalysisPrompt,
@@ -48,6 +49,13 @@ const filledSenior = computed(() =>
   }),
 )
 
+const promptBlocks = computed(() => [
+  { key: 'master', title: 'Master — research + outreach', text: filledMaster.value },
+  { key: 'deep', title: 'Follow-up — deep analysis', text: filledDeep.value },
+  { key: 'rewrite', title: 'Follow-up — rewrite email', text: filledRewrite.value },
+  { key: 'senior', title: 'Advanced — product engineer wins', text: filledSenior.value },
+])
+
 const copied = ref<string | null>(null)
 async function copy(text: string, key: string) {
   if (isComingSoon)
@@ -70,65 +78,56 @@ async function copy(text: string, key: string) {
     <div>
       <div class="flex flex-wrap items-center gap-3">
         <AppLogo :as-link="false" size="sm" :show-wordmark="false" />
-        <h1 class="text-2xl font-semibold text-white">Prompt pack</h1>
+        <h1 class="text-2xl font-semibold" style="color: var(--gk-color-on-surface)">Prompt pack</h1>
       </div>
-      <p class="mt-1 text-sm text-slate-400">
+      <p class="mt-1 text-sm" style="color: var(--gk-color-on-surface-variant)">
         Copy prompts into ChatGPT or your agent. Optional fields below fill placeholders in follow-up prompts.
       </p>
     </div>
 
-    <section class="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-      <h2 class="text-sm font-medium text-slate-200">Context for follow-up prompts</h2>
-      <label class="block text-xs text-slate-500">Extra preferences (appended to master prompt)</label>
-      <textarea
-        v-model="prefs"
-        rows="2"
-        class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-        placeholder="e.g. Prefer B2B SaaS, avoid crypto…"
-      />
-      <div class="grid gap-3 sm:grid-cols-2">
-        <label class="block text-xs text-slate-500">
-          Startup name
-          <input v-model="startupName" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white">
-        </label>
-        <label class="block text-xs text-slate-500">
-          Startup URL
-          <input v-model="startupUrl" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white">
-        </label>
-      </div>
-      <label class="block text-xs text-slate-500">
-        Email to rewrite (for “rewrite email” prompt)
-        <textarea
-          v-model="emailBody"
-          rows="4"
-          class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+    <section class="gj-surface space-y-3 rounded-[var(--gk-radius-lg)] p-4">
+      <h2 class="text-sm font-medium" style="color: var(--gk-color-on-surface)">Context for follow-up prompts</h2>
+      <GkField label="Extra preferences (appended to master prompt)">
+        <GkTextarea
+          v-model="prefs"
+          :rows="2"
+          placeholder="e.g. Prefer B2B SaaS, avoid crypto…"
         />
-      </label>
+      </GkField>
+      <GkGrid :columns="2" :columns-mobile="1" :gap="3">
+        <GkField label="Startup name">
+          <GkInput v-model="startupName" type="text" />
+        </GkField>
+        <GkField label="Startup URL">
+          <GkInput v-model="startupUrl" type="url" />
+        </GkField>
+      </GkGrid>
+      <GkField label="Email to rewrite (for &quot;rewrite email&quot; prompt)">
+        <GkTextarea v-model="emailBody" :rows="4" />
+      </GkField>
     </section>
 
     <section
-      v-for="block in [
-        { key: 'master', title: 'Master — research + outreach', text: filledMaster },
-        { key: 'deep', title: 'Follow-up — deep analysis', text: filledDeep },
-        { key: 'rewrite', title: 'Follow-up — rewrite email', text: filledRewrite },
-        { key: 'senior', title: 'Advanced — product engineer wins', text: filledSenior },
-      ]"
+      v-for="block in promptBlocks"
       :key="block.key"
       class="space-y-2"
     >
       <div class="flex items-center justify-between gap-2">
-        <h2 class="text-sm font-medium text-slate-200">{{ block.title }}</h2>
-        <button
+        <h2 class="text-sm font-medium" style="color: var(--gk-color-on-surface)">{{ block.title }}</h2>
+        <GkButton
           type="button"
-          class="rounded-md px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-60"
-          :class="isComingSoon ? 'bg-slate-800/80 text-slate-500' : 'bg-slate-800 text-slate-100 hover:bg-slate-700'"
+          size="sm"
+          variant="secondary"
           :disabled="isComingSoon"
           @click="copy(block.text, block.key)"
         >
           {{ isComingSoon ? 'Coming soon' : copied === block.key ? 'Copied' : 'Copy' }}
-        </button>
+        </GkButton>
       </div>
-      <pre class="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-950 p-4 text-xs leading-relaxed text-slate-300">{{ block.text }}</pre>
+      <pre
+        class="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg border p-4 text-xs leading-relaxed"
+        style="border-color: var(--gk-color-border); background: var(--gk-color-surface); color: var(--gk-color-on-surface)"
+      >{{ block.text }}</pre>
     </section>
   </div>
 </template>
