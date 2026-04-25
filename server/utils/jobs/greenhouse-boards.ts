@@ -1,4 +1,4 @@
-import { JOBS_FETCH_UA } from './http-constants'
+import { getJobsFetchUserAgent } from './http-constants'
 
 /**
  * Greenhouse does not publish an API to discover every public board. This list is a
@@ -67,7 +67,7 @@ export function expandGreenhouseBoardTokens(tokens: string[]): string[] {
 /** Fetch a plain-text or comma-separated list of board tokens (one token per line; `#` comments allowed). */
 export async function fetchGreenhouseBoardListFromUrl(url: string): Promise<string[]> {
   const res = await fetch(url.trim(), {
-    headers: { 'User-Agent': JOBS_FETCH_UA, Accept: 'text/plain,text/csv,*/*' },
+    headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'text/plain,text/csv,*/*' },
     signal: AbortSignal.timeout(25_000),
   })
   if (!res.ok)

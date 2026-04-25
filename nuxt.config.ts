@@ -53,6 +53,8 @@ export default defineNuxtConfig({
     jobsGreenhouseBoards: '',
     /** Optional URL to a plain-text list of board tokens (one per line; `#` comments ok). Env: `NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL`. */
     jobsGreenhouseBoardListUrl: '',
+    /** Override User-Agent for job connector HTTP requests if a provider returns 403 on your host (e.g. Remote OK on some VPS IPs). Env: `NUXT_JOBS_FETCH_USER_AGENT`. */
+    jobsFetchUserAgent: '',
     public: {
       /** Public site origin (no trailing slash). Used for canonical URLs, Open Graph, and sitemap. Set via `NUXT_PUBLIC_SITE_URL`. */
       siteUrl: '',

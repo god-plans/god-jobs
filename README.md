@@ -71,7 +71,11 @@ Set **`NUXT_PUBLIC_SITE_URL`** to your public origin (no trailing slash) so cano
 | `NUXT_JOBS_RSS_FEEDS` | Comma- or newline-separated RSS/Atom URLs merged into the `rss` sync source. |
 | `NUXT_JOBS_GREENHOUSE_BOARDS` | Greenhouse board tokens (`boards.greenhouse.io/{token}`), or keyword `curated` for a built-in pack. |
 | `NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL` | URL to a plain-text list of extra board tokens (one per line). |
+| `NUXT_JOBS_FETCH_USER_AGENT` | Optional full User-Agent string for outbound job syncs. Some hosts (e.g. certain VPS ranges) get **HTTP 403** from Remote OK with the default; set a normal browser UA here if sync logs show `Remote OK HTTP 403`. |
 | `JOBS_GREENHOUSE_BOARDS` | Fallback if the `NUXT_`-prefixed key is not set (server). |
+| `JOBS_FETCH_USER_AGENT` | Non-`NUXT_` fallback for the same User-Agent override (server). |
+
+**Why fewer jobs on the server than locally?** One sync only upserts what each API returns right now (e.g. Jobicy caps at 100; HN is filtered hiring titles). **Remote OK** often accounts for ~100 rows; if it errors with 403 on your server, you lose that chunk. Your local SQLite may also contain **months of history** from earlier syncs. After deploy, run **Sync** again and check the per-source line in the snackbar; set `NUXT_JOBS_FETCH_USER_AGENT` or add `NUXT_JOBS_RSS_FEEDS` / Greenhouse if you need more volume.
 
 See the in-app **Jobs → About sources** section for full behavior and export links.
 

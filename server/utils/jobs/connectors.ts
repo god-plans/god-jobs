@@ -3,7 +3,7 @@ import Parser from 'rss-parser'
 import { hnTitleLooksLikeJobPost } from './hn-filter'
 import { stripHtml, truncate } from './text'
 import type { NewJobListing } from './types'
-import { JOBS_FETCH_UA as UA } from './http-constants'
+import { getJobsFetchUserAgent } from './http-constants'
 
 export type JobSourceId =
   | 'remotive'
@@ -16,7 +16,7 @@ export type JobSourceId =
 
 const rssParser = new Parser({
   timeout: 25000,
-  headers: { 'User-Agent': UA, Accept: 'application/rss+xml, application/atom+xml, */*' },
+  headers: { Accept: 'application/rss+xml, application/atom+xml, */*' },
 })
 
 /** Used when `JOBS_RSS_FEEDS` is empty so “RSS” sync still ingests a public job feed. */
@@ -26,7 +26,7 @@ async function fetchAndParseFeed(feedUrl: string) {
   const res = await fetch(feedUrl, {
     redirect: 'follow',
     headers: {
-      'User-Agent': UA,
+      'User-Agent': getJobsFetchUserAgent(),
       Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
     },
   })
@@ -53,7 +53,7 @@ function hnPostedAt(hit: Record<string, unknown>): string | null {
 
 export async function fetchRemotiveJobs(): Promise<NewJobListing[]> {
   const res = await fetch('https://remotive.com/api/remote-jobs', {
-    headers: { 'User-Agent': UA, Accept: 'application/json' },
+    headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'application/json' },
   })
   if (!res.ok) throw new Error(`Remotive HTTP ${res.status}`)
   const data = (await res.json()) as { jobs?: Record<string, unknown>[] }
@@ -88,7 +88,7 @@ function describe(job: Record<string, unknown>) {
 
 export async function fetchArbeitnowJobs(): Promise<NewJobListing[]> {
   const res = await fetch('https://www.arbeitnow.com/api/job-board-api', {
-    headers: { 'User-Agent': UA, Accept: 'application/json' },
+    headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'application/json' },
   })
   if (!res.ok) throw new Error(`Arbeitnow HTTP ${res.status}`)
   const data = (await res.json()) as { data?: Record<string, unknown>[] }
@@ -121,9 +121,24 @@ export async function fetchArbeitnowJobs(): Promise<NewJobListing[]> {
 
 /** Remote OK — public JSON API (first row may be legal/terms metadata). */
 export async function fetchRemoteOkJobs(): Promise<NewJobListing[]> {
-  const res = await fetch('https://remoteok.com/api', {
-    headers: { 'User-Agent': UA, Accept: 'application/json' },
-  })
+  const browserLikeUa =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+
+  async function request(ua: string) {
+    return fetch('https://remoteok.com/api', {
+      headers: {
+        'User-Agent': ua,
+        Accept: 'application/json',
+        Referer: 'https://remoteok.com/',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    })
+  }
+
+  let res = await request(getJobsFetchUserAgent())
+  if (res.status === 403) {
+    res = await request(browserLikeUa)
+  }
   if (!res.ok) throw new Error(`Remote OK HTTP ${res.status}`)
   const data = (await res.json()) as Record<string, unknown>[]
   const out: NewJobListing[] = []
@@ -162,7 +177,7 @@ export async function fetchJobicyJobs(count = 100): Promise<NewJobListing[]> {
   const u = new URL('https://jobicy.com/api/v2/remote-jobs')
   u.searchParams.set('count', String(capped))
   const res = await fetch(u.toString(), {
-    headers: { 'User-Agent': UA, Accept: 'application/json' },
+    headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'application/json' },
   })
   const text = await res.text()
   if (!res.ok) {
@@ -219,7 +234,7 @@ export async function fetchGreenhouseJobs(boardTokens: string[]): Promise<{ rows
     try {
       const apiUrl = `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(board)}/jobs`
       const res = await fetch(apiUrl, {
-        headers: { 'User-Agent': UA, Accept: 'application/json' },
+        headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'application/json' },
       })
       if (!res.ok) {
         warnings.push(`"${board}": HTTP ${res.status}`)
@@ -311,7 +326,7 @@ export async function fetchHnJobs(query: string, hitsPerPage = 50): Promise<NewJ
   u.searchParams.set('query', q)
   u.searchParams.set('hitsPerPage', String(Math.min(50, Math.max(1, hitsPerPage))))
   const res = await fetch(u.toString(), {
-    headers: { 'User-Agent': UA, Accept: 'application/json' },
+    headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'application/json' },
   })
   if (!res.ok) throw new Error(`HN Algolia HTTP ${res.status}`)
   const data = (await res.json()) as { hits?: Record<string, unknown>[] }
