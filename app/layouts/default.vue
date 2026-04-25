@@ -270,7 +270,7 @@ useHead({
       </div>
     </header>
     <main class="gj-main">
-      <GkContainer max-width="full" :padded="true" class="mx-auto max-w-6xl !px-0">
+      <GkContainer max-width="full" :padded="true" class="mx-auto !max-w-6xl !px-0">
         <slot />
       </GkContainer>
     </main>

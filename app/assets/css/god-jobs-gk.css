@@ -44,9 +44,20 @@ html.dark,
   --gk-color-primary-hover: var(--gk-palette-success-400);
   --gk-color-primary-active: var(--gk-palette-success-600);
   --gk-color-focus-ring: rgba(18, 183, 106, 0.45);
+  /**
+   * Luxury dark stack: near-black canvas, subtle card lift, soft hairline borders.
+   * (Overrides default gray-800/700 from god-kit for a richer, deeper UI.)
+   */
+  --gk-color-bg: #060607;
+  --gk-color-surface: #0c0c0e;
+  --gk-color-surface-elevated: #141419;
+  --gk-color-border: rgba(255, 255, 255, 0.055);
+  --gk-color-border-strong: rgba(255, 255, 255, 0.1);
+  --gj-luxury-shadow-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 40px rgba(0, 0, 0, 0.45);
+  --gj-luxury-shadow-2: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 12px 48px rgba(0, 0, 0, 0.55);
 }
 
-/* Card/box surfaces in dark: clear step up from page bg */
+/* Card/box surfaces in dark: elevated panel + premium edge */
 .dark .gj-surface,
 html.dark .gj-surface,
 :root[data-gk-theme="dark"] .gj-surface,
@@ -54,6 +65,7 @@ html.dark .gj-surface,
   background: var(--gk-color-surface-elevated);
   border-color: var(--gk-color-border-strong);
   color: var(--gk-color-on-surface);
+  box-shadow: var(--gj-luxury-shadow-1);
 }
 
 /* Ensure form labels stay on primary text color on tinted surfaces (light + dark). */
@@ -65,7 +77,7 @@ html.dark .gj-surface,
 html.dark .gj-surface--raised,
 :root[data-gk-theme="dark"] .gj-surface--raised,
 [data-gk-theme="dark"] .gj-surface--raised {
-  box-shadow: var(--gk-elevation-2);
+  box-shadow: var(--gj-luxury-shadow-2);
 }
 
 /* Site footer */
@@ -81,6 +93,7 @@ html.dark .gj-footer,
 [data-gk-theme="dark"] .gj-footer {
   background: var(--gk-color-surface);
   border-color: var(--gk-color-border-strong);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .gj-footer__support {
