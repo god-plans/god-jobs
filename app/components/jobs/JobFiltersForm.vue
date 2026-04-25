@@ -123,7 +123,7 @@ function toggleCategory(id: string) {
         </div>
         <div class="w-full min-w-0 sm:w-full sm:max-w-none md:max-w-[14rem] lg:w-auto lg:min-w-[9rem]">
           <div class="flex w-full min-w-0 flex-col gap-1">
-            <span class="text-xs font-medium uppercase tracking-wide" style="color: var(--gk-color-on-surface-variant)">Sort</span>
+
             <div class="flex w-full gap-2">
               <GkSelect
                 class="min-w-0 flex-1"

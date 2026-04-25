@@ -1,3 +1,4 @@
+import { GkButton } from 'god-kit'
 import type { GkKitOptions } from 'god-kit/vue/config'
 
 /**
@@ -23,6 +24,7 @@ export const gkKitConfig: GkKitOptions = {
    * is redundant. For control `size`, prefer `form.defaultControlSize` above, or set
    * `defaults.GkInput.size` to override a single component.
    */
-
-
+  defaults: {
+    GkButton: { size: 'sm' },
+  },
 }

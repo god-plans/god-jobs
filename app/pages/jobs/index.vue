@@ -12,6 +12,7 @@ import {
   GkExpansionPanelText,
   GkExpansionPanelTitle,
   GkField,
+  GkInput,
   GkPagination,
   GkSelect,
   pushGkSnackbar,
@@ -39,6 +40,8 @@ const filters = reactive<JobFiltersModel>({
   sortOrder: 'desc',
 })
 const mobileFiltersOpen = ref(false)
+/** md+ only: full filter card starts collapsed; search stays available in the compact bar. */
+const desktopFiltersExpanded = ref(false)
 const aboutExpanded = ref<string[]>([])
 const page = ref(1)
 const pageSize = ref(50)
@@ -388,7 +391,18 @@ function openExternal(url: string) {
     window.open(url, '_blank', 'noopener,noreferrer')
 }
 
+const mdUp = ref(false)
+let mq: MediaQueryList | null = null
+function setMdUp() {
+  if (import.meta.client && window.matchMedia)
+    mdUp.value = window.matchMedia('(min-width: 768px)').matches
+}
+
 onMounted(() => {
+  setMdUp()
+  mq = window.matchMedia('(min-width: 768px)')
+  mq.addEventListener('change', setMdUp)
+
   if (!nudgeAllowed()) return
   const el = resultsSentinel.value
   if (!el) return
@@ -417,13 +431,15 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  mq?.removeEventListener('change', setMdUp)
+  mq = null
   resultsObserver?.disconnect()
   resultsObserver = null
 })
 </script>
 
 <template>
-  <div class="space-y-6 p-4 pb-32 ">
+  <div class="space-y-6 py-4 pb-32 ">
     <!-- Hero -->
     <div class="flex flex-col gap-4 border-b pb-6" style="border-color: var(--gk-color-border)">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -495,16 +511,83 @@ onBeforeUnmount(() => {
       :variant="syncMsg.includes('error') || syncMsg.includes('failed') || syncMsg.includes('Error') ? 'danger' : 'neutral'" />
     <GkAlert v-if="error" :text="String(error?.message || error)" class="!my-0" variant="danger" />
 
-    <!-- Desktop filters -->
-    <div class="hidden flex-col space-y-3  md:top-0 md:z-10 md:flex md:overflow-visible md:p-5"
-      :class="['gj-surface', 'gj-surface--raised', 'rounded-[var(--gk-radius-lg)]']" style="backface-visibility: hidden"
-      role="region" aria-label="Job search and filters">
-      <JobsJobFiltersForm v-model="filters" />
-      <div v-if="hasActiveFilters" class="flex w-full shrink-0 justify-end border-t pt-3"
-        style="border-color: var(--gk-color-border)">
-        <GkButton type="button" variant="ghost" @click="clearFilters">
-          Clear all filters
-        </GkButton>
+    <!-- md+: compact search by default; full filter panel on demand (not mounted on &lt;md to avoid clashing with mobile sheet) -->
+    <div v-if="mdUp" class="space-y-0">
+      <div
+        v-if="!desktopFiltersExpanded"
+        class="gj-surface gj-surface--raised rounded-[var(--gk-radius-lg)] p-4"
+        style="backface-visibility: hidden"
+        role="search"
+        aria-label="Quick job search"
+      >
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div class="min-w-0 flex-1">
+            <GkField label="Search">
+              <GkInput
+                id="jobs-search-compact"
+                v-model="filters.q"
+                type="search"
+                enterkeyhint="search"
+                placeholder="Search title, company, snippet…"
+                autocomplete="off"
+              />
+            </GkField>
+          </div>
+          <div class="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:justify-start">
+            <span
+              v-if="hasActiveFilters"
+              class="gj-pill inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+              style="
+                background: color-mix(in srgb, var(--gk-color-primary) 16%, transparent);
+                color: var(--gk-color-primary);
+              "
+            >
+              Active
+            </span>
+            <GkButton
+              type="button"
+              variant="secondary"
+              :aria-expanded="false"
+              aria-controls="jobs-filters-panel-desktop"
+              @click="desktopFiltersExpanded = true"
+              size="sm"
+            >
+              All filters
+            </GkButton>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-else
+        id="jobs-filters-panel-desktop"
+        class="gj-surface gj-surface--raised flex flex-col space-y-3 overflow-visible p-5"
+        style="backface-visibility: hidden"
+        role="region"
+        aria-label="Job search and filters"
+      >
+        <div class="flex items-center justify-end border-b pb-3" style="border-color: var(--gk-color-border)">
+          <GkButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            :aria-expanded="true"
+            aria-controls="jobs-filters-panel-desktop"
+            @click="desktopFiltersExpanded = false"
+          >
+            Hide filters
+          </GkButton>
+        </div>
+        <JobsJobFiltersForm v-model="filters" />
+        <div
+          v-if="hasActiveFilters"
+          class="flex w-full shrink-0 justify-end border-t pt-3"
+          style="border-color: var(--gk-color-border)"
+        >
+          <GkButton type="button" variant="ghost" size="sm" @click="clearFilters">
+            Clear all filters
+          </GkButton>
+        </div>
       </div>
     </div>
 

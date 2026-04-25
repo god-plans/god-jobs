@@ -57,14 +57,7 @@ useHead({
   <div class="w-full space-y-20">
     <!-- Hero -->
     <section class=" relative overflow-hidden px-6 py-14 sm:px-10 sm:py-20">
-      <div
-        class="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl"
-        aria-hidden="true"
-      />
-      <div
-        class="pointer-events-none absolute -bottom-32 -left-20 h-64 w-64 rounded-full bg-sky-500/5 blur-3xl"
-        aria-hidden="true"
-      />
+    
       <div class="relative mx-auto max-w-3xl text-center">
         <div class="mb-6 flex justify-center">
           <AppLogo :as-link="false" size="xl" :show-wordmark="false" />
