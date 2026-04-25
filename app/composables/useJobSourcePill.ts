@@ -1,8 +1,7 @@
 import { JOB_SOURCE_PILL, JOB_SOURCE_PILL_DEFAULT } from '~~/shared/jobSourcePills'
-import { useGkTheme } from 'god-kit/vue/config'
 
 export function useJobSourcePill() {
-  const { isDark } = useGkTheme()
+  const { isDark } = useGodJobsThemeIsDark()
 
   function sourcePillClass(src: string) {
     const key = isDark.value ? 'dark' : 'light'

@@ -7,7 +7,7 @@ import type { GkKitOptions } from 'god-kit/vue/config'
  */
 export const gkKitConfig: GkKitOptions = {
   theme: {
-    defaultTheme: 'system',
+    defaultTheme: 'dark',
   },
   display: {
     mobileBreakpoint: 'md',

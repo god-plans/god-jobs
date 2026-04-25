@@ -2,6 +2,12 @@
 import { GkButton, GkContainer, GkFormControlsProvider, GkSnackbarHost } from 'god-kit/vue'
 import { useGkTheme } from 'god-kit/vue/config'
 import { gkKitConfig } from '~/gk.config'
+import {
+  GOD_JOBS_THEME_KEY,
+  GOD_JOBS_THEME_MAX_AGE_SEC,
+  isGodJobsThemeName,
+  type GodJobsStoredTheme,
+} from '~~/shared/themePreference'
 
 const formControlSize = gkKitConfig.form?.defaultControlSize ?? 'md'
 
@@ -18,6 +24,44 @@ watch(() => route.fullPath, () => {
 })
 
 const theme = useGkTheme()
+const themeCookie = useCookie<GodJobsStoredTheme | null>(GOD_JOBS_THEME_KEY, {
+  default: () => null,
+  maxAge: GOD_JOBS_THEME_MAX_AGE_SEC,
+  sameSite: 'lax',
+  path: '/',
+})
+
+watch(
+  () => theme.name.value,
+  (name) => {
+    const v = String(name)
+    if (!isGodJobsThemeName(v))
+      return
+    themeCookie.value = v
+    if (import.meta.client) {
+      try {
+        localStorage.setItem(GOD_JOBS_THEME_KEY, v)
+      }
+      catch {
+        /* ignore */
+      }
+    }
+  },
+)
+
+onMounted(() => {
+  try {
+    const raw = localStorage.getItem(GOD_JOBS_THEME_KEY)
+    if (!isGodJobsThemeName(raw))
+      return
+    if (String(theme.name.value) !== raw)
+      theme.change(raw)
+  }
+  catch {
+    /* ignore */
+  }
+})
+
 const THEME_CYCLE = ['light', 'dark', 'system'] as const
 
 function cycleTheme() {
