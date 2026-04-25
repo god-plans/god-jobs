@@ -1,6 +1,20 @@
 <script setup lang="ts">
-import { GkButton, GkContainer, GkSnackbarHost } from 'god-kit/vue'
+import { gkKitConfig } from '~/gk.config'
+import {
+  GkButton,
+  GkContainer,
+  GkFormControlsProvider,
+  GkSnackbarHost,
+} from 'god-kit/vue'
 import { useGkTheme } from 'god-kit/vue/config'
+
+/**
+ * Re-provide `GK_FORM_CONTROLS` for the app shell. Nuxt/Vite can prebundle
+ * `god-kit/vue` and `god-kit/vue/config` separately, so `Symbol` keys from
+ * `createGkKit` in the plugin may not match `inject` in components. This keeps
+ * `form.defaultControlSize` in step with `~/gk.config` (see `nuxt` `vite.ssr.noExternal` too).
+ */
+const formControlSize = gkKitConfig.form?.defaultControlSize ?? 'md'
 
 const mobileNavOpen = ref(false)
 
@@ -38,6 +52,7 @@ useHead({
 
 <template>
   <div class="gj-app-root">
+    <GkFormControlsProvider :size="formControlSize">
     <header class="gj-header">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
         <div class="min-w-0 shrink ">
@@ -273,5 +288,6 @@ useHead({
       </GkContainer>
     </main>
     <GkSnackbarHost />
+    </GkFormControlsProvider>
   </div>
 </template>

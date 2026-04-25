@@ -18,10 +18,10 @@ const props = withDefaults(
 const imgClass = computed(() => {
   const map = {
     xs: 'h-9 w-9',
-    sm: 'h-12 w-12',
-    md: 'h-14 w-14 sm:h-16 sm:w-16',
-    lg: 'h-24 w-24 sm:h-28 sm:w-28',
-    xl: 'h-32 w-32 sm:h-40 sm:w-40',
+    sm: 'h-10 w-10',
+    md: 'h-12 w-12 sm:h-10 sm:w-10',
+    lg: 'h-12 w-12 sm:h-14 sm:w-14',
+    xl: 'h-24 w-24 sm:h-28 sm:w-28',
   }
   return map[props.size]
 })
@@ -38,8 +38,8 @@ const imgAlt = computed(() => (props.showWordmark ? '' : 'God Jobs'))
     <img
       src="/logo.png"
       :alt="imgAlt"
-      width="160"
-      height="160"
+      width="80"
+      height="80"
       class="shrink-0 object-contain"
       :class="imgClass"
     >
@@ -49,8 +49,8 @@ const imgAlt = computed(() => (props.showWordmark ? '' : 'God Jobs'))
     <img
       src="/logo.png"
       :alt="imgAlt"
-      width="160"
-      height="160"
+      width="80"
+      height="80"
       class="shrink-0 object-contain"
       :class="imgClass"
     >

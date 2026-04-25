@@ -90,7 +90,7 @@ function toggleCategory(id: string) {
   <div class="space-y-3">
     <div class="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:gap-3">
       <div class="min-w-0 w-full lg:flex-1">
-        <GkField label="Search" label-sr-only>
+        <GkField label="Search" >
           <GkInput
             id="jobs-search"
             v-model="model.q"
@@ -98,6 +98,7 @@ function toggleCategory(id: string) {
             enterkeyhint="search"
             placeholder="Search title, company, snippet…"
             autocomplete="off"
+            
           />
         </GkField>
       </div>

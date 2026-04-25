@@ -27,8 +27,17 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    /**
+     * Keep `god-kit` in the SSR/canvas Vite graph so the same ESM (and the same
+     * `Symbol` injection keys for `GK_FORM_CONTROLS` / `createGkKit`) is used
+     * as the client. Without this, a separate prebundle of `god-kit/vue/config`
+     * vs `god-kit/vue` can yield duplicate symbols and `inject` misses `provide`.
+     */
     ssr: {
-      noExternal: ['papaparse'],
+      noExternal: ['papaparse', 'god-kit'],
+    },
+    optimizeDeps: {
+      include: ['god-kit/vue', 'god-kit/vue/config'],
     },
   },
 
