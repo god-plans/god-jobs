@@ -55,6 +55,8 @@ export default defineNuxtConfig({
     jobsGreenhouseBoardListUrl: '',
     /** Override User-Agent for job connector HTTP requests if a provider returns 403 on your host (e.g. Remote OK on some VPS IPs). Env: `NUXT_JOBS_FETCH_USER_AGENT`. */
     jobsFetchUserAgent: '',
+    /** HTTP(S) proxy URL for job sync outbound requests (Undici). Env: `NUXT_JOBS_HTTPS_PROXY`. Use if Remote OK returns 403 from your host’s IP. */
+    jobsHttpsProxy: '',
     public: {
       /** Public site origin (no trailing slash). Used for canonical URLs, Open Graph, and sitemap. Set via `NUXT_PUBLIC_SITE_URL`. */
       siteUrl: '',

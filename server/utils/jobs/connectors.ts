@@ -4,6 +4,7 @@ import { hnTitleLooksLikeJobPost } from './hn-filter'
 import { stripHtml, truncate } from './text'
 import type { NewJobListing } from './types'
 import { getJobsFetchUserAgent } from './http-constants'
+import { jobsFetch } from './jobs-fetch'
 
 export type JobSourceId =
   | 'remotive'
@@ -23,7 +24,7 @@ const rssParser = new Parser({
 export const DEFAULT_JOB_RSS_FEEDS = ['https://weworkremotely.com/remote-jobs.rss'] as const
 
 async function fetchAndParseFeed(feedUrl: string) {
-  const res = await fetch(feedUrl, {
+  const res = await jobsFetch(feedUrl, {
     redirect: 'follow',
     headers: {
       'User-Agent': getJobsFetchUserAgent(),
@@ -52,7 +53,7 @@ function hnPostedAt(hit: Record<string, unknown>): string | null {
 }
 
 export async function fetchRemotiveJobs(): Promise<NewJobListing[]> {
-  const res = await fetch('https://remotive.com/api/remote-jobs', {
+  const res = await jobsFetch('https://remotive.com/api/remote-jobs', {
     headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'application/json' },
   })
   if (!res.ok) throw new Error(`Remotive HTTP ${res.status}`)
@@ -87,7 +88,7 @@ function describe(job: Record<string, unknown>) {
 }
 
 export async function fetchArbeitnowJobs(): Promise<NewJobListing[]> {
-  const res = await fetch('https://www.arbeitnow.com/api/job-board-api', {
+  const res = await jobsFetch('https://www.arbeitnow.com/api/job-board-api', {
     headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'application/json' },
   })
   if (!res.ok) throw new Error(`Arbeitnow HTTP ${res.status}`)
@@ -125,7 +126,7 @@ export async function fetchRemoteOkJobs(): Promise<NewJobListing[]> {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 
   async function request(ua: string) {
-    return fetch('https://remoteok.com/api', {
+    return jobsFetch('https://remoteok.com/api', {
       headers: {
         'User-Agent': ua,
         Accept: 'application/json',
@@ -139,7 +140,13 @@ export async function fetchRemoteOkJobs(): Promise<NewJobListing[]> {
   if (res.status === 403) {
     res = await request(browserLikeUa)
   }
-  if (!res.ok) throw new Error(`Remote OK HTTP ${res.status}`)
+  if (!res.ok) {
+    const hint =
+      res.status === 403
+        ? ' Datacenter IPs are often blocked; set NUXT_JOBS_HTTPS_PROXY (or JOBS_HTTPS_PROXY / HTTPS_PROXY) to a proxy, or run sync from another network.'
+        : ''
+    throw new Error(`Remote OK HTTP ${res.status}.${hint}`)
+  }
   const data = (await res.json()) as Record<string, unknown>[]
   const out: NewJobListing[] = []
   for (const row of data) {
@@ -176,7 +183,7 @@ export async function fetchJobicyJobs(count = 100): Promise<NewJobListing[]> {
   const capped = Math.min(100, Math.max(1, count))
   const u = new URL('https://jobicy.com/api/v2/remote-jobs')
   u.searchParams.set('count', String(capped))
-  const res = await fetch(u.toString(), {
+  const res = await jobsFetch(u.toString(), {
     headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'application/json' },
   })
   const text = await res.text()
@@ -233,7 +240,7 @@ export async function fetchGreenhouseJobs(boardTokens: string[]): Promise<{ rows
   for (const board of tokens) {
     try {
       const apiUrl = `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(board)}/jobs`
-      const res = await fetch(apiUrl, {
+      const res = await jobsFetch(apiUrl, {
         headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'application/json' },
       })
       if (!res.ok) {
@@ -325,7 +332,7 @@ export async function fetchHnJobs(query: string, hitsPerPage = 50): Promise<NewJ
   u.searchParams.set('tags', 'story')
   u.searchParams.set('query', q)
   u.searchParams.set('hitsPerPage', String(Math.min(50, Math.max(1, hitsPerPage))))
-  const res = await fetch(u.toString(), {
+  const res = await jobsFetch(u.toString(), {
     headers: { 'User-Agent': getJobsFetchUserAgent(), Accept: 'application/json' },
   })
   if (!res.ok) throw new Error(`HN Algolia HTTP ${res.status}`)
