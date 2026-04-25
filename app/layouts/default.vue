@@ -232,6 +232,12 @@ useHead({
                 God Plans on GitHub
               </a>
             </li>
+            <li>
+              <a class="gj-footer__link" href="https://github.com/sponsors/parsajiravand" target="_blank"
+                rel="noopener noreferrer">
+                Sponsor on GitHub (Parsa Jiravand)
+              </a>
+            </li>
           </ul>
           <p class="gj-footer__meta mt-8 text-xs">
             © {{ footerYear }} God Jobs · Part of the God Plans ecosystem.

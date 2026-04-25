@@ -9,6 +9,8 @@ useSiteSeo({
   indexable: true,
 })
 
+const SPONSOR_GITHUB_URL = 'https://github.com/sponsors/parsajiravand'
+
 const config = useRuntimeConfig()
 const siteBase = computed(() => String(config.public.siteUrl ?? '').trim().replace(/\/$/, ''))
 const router = useRouter()
@@ -181,31 +183,8 @@ useHead({
       </GkGrid>
     </section>
 
-    <!-- Workspace / God Plans teaser -->
-    <section class="mx-auto mt-20 max-w-5xl px-1">
-      <div class="gj-surface rounded-2xl px-6 py-10 sm:px-10">
-        <div class="mx-auto max-w-2xl text-center">
-          <h2 class="text-xl font-semibold sm:text-2xl" style="color: var(--gk-color-on-surface)">
-            Private workspace &amp; God Plans
-          </h2>
-          <p class="mt-3 leading-relaxed" style="color: var(--gk-color-on-surface-variant)">
-            Beyond the public job board, God Jobs includes a private area for startup research, outreach drafts, and
-            prompt tooling—tied to upcoming <strong class="font-medium" style="color: var(--gk-color-on-surface)">God Plans</strong> tiers for teams who want CRM-style workflows next to the feed.
-          </p>
-          <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <GkButton type="button" variant="secondary" @click="go('/startups')">
-              Startup workspace
-            </GkButton>
-            <GkButton type="button" variant="ghost" @click="go('/prompts')">
-              Prompt pack
-            </GkButton>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Bottom CTA -->
-    <section class="mx-auto mt-20 mb-4 max-w-5xl px-1 pb-8">
+    <section class="mx-auto mt-20  max-w-5xl px-1 pb-8">
       <div
         class="rounded-2xl border px-6 py-10 text-center sm:px-12"
         style="
@@ -235,5 +214,75 @@ useHead({
         </p>
       </div>
     </section>
+    <!-- Workspace / God Plans teaser -->
+    <section class="mx-auto mt-20 max-w-5xl px-1">
+      <div class="gj-surface rounded-2xl px-6 py-10 sm:px-10">
+        <div class="mx-auto max-w-2xl text-center">
+          <h2 class="text-xl font-semibold sm:text-2xl" style="color: var(--gk-color-on-surface)">
+            Private workspace &amp; God Plans
+          </h2>
+          <p class="mt-3 leading-relaxed" style="color: var(--gk-color-on-surface-variant)">
+            Beyond the public job board, God Jobs includes a private area for startup research, outreach drafts, and
+            prompt tooling—tied to upcoming <strong class="font-medium" style="color: var(--gk-color-on-surface)">God Plans</strong> tiers for teams who want CRM-style workflows next to the feed.
+          </p>
+          <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <GkButton type="button" variant="secondary" @click="go('/startups')">
+              Startup workspace
+            </GkButton>
+            <GkButton type="button" variant="ghost" @click="go('/prompts')">
+              Prompt pack
+            </GkButton>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sponsor -->
+    <section class="mx-auto mt-20 max-w-5xl px-1 !mb-20">
+      <div
+        class="rounded-2xl border px-6 py-10 sm:px-10"
+        style="
+          border-color: color-mix(in srgb, var(--gk-color-primary) 22%, var(--gk-color-border));
+          background: linear-gradient(145deg, color-mix(in srgb, var(--gk-color-primary) 10%, var(--gk-color-surface)) 0%, var(--gk-color-surface) 100%);
+        "
+      >
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="text-xs font-medium uppercase tracking-widest" style="color: var(--gk-color-primary)">
+            Open source
+          </p>
+          <h2 class="mt-3 text-xl font-semibold sm:text-2xl" style="color: var(--gk-color-on-surface)">
+            Sponsor God Jobs &amp; related work
+          </h2>
+          <p class="mt-3 leading-relaxed" style="color: var(--gk-color-on-surface-variant)">
+            If this board saves you time, consider supporting maintainer
+            <strong class="font-medium" style="color: var(--gk-color-on-surface)">Parsa Jiravand</strong>
+            on
+            <a
+              :href="SPONSOR_GITHUB_URL"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-medium underline underline-offset-2"
+              style="color: var(--gk-color-primary)"
+            >GitHub Sponsors</a>.
+            Sponsorship helps keep aggregations, filters, and exports maintained.
+          </p>
+          <a
+            :href="SPONSOR_GITHUB_URL"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-8 inline-flex min-h-11 items-center justify-center rounded-[var(--gk-radius-md)] px-5 text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            style="
+              background: var(--gk-color-primary);
+              color: var(--gk-color-text-on-primary);
+              outline-color: var(--gk-color-primary);
+            "
+          >
+            Sponsor on GitHub
+            <span class="ml-1.5" aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
   </div>
 </template>
