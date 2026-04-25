@@ -11,6 +11,8 @@ import {
   GkExpansionPanels,
   GkExpansionPanelText,
   GkExpansionPanelTitle,
+  GkField,
+  GkPagination,
   GkSelect,
   pushGkSnackbar,
 } from 'god-kit/vue'
@@ -127,6 +129,8 @@ const { data, pending, refresh, error } = await useAsyncData(
 
 const total = computed(() => data.value?.meta?.total ?? 0)
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+const showingFrom = computed(() => (total.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1))
+const showingTo = computed(() => Math.min(page.value * pageSize.value, total.value))
 
 const hasActiveFilters = computed(() => {
   return Boolean(
@@ -199,15 +203,30 @@ function remoteLabel(job: JobListing) {
 
 function sourcePillClass(src: string) {
   const map: Record<string, string> = {
-    remotive: 'bg-violet-500/20 text-violet-300 ring-1 ring-inset ring-violet-500/40',
-    arbeitnow: 'bg-amber-500/20 text-amber-200 ring-1 ring-inset ring-amber-500/35',
-    hn: 'bg-orange-500/20 text-orange-200 ring-1 ring-inset ring-orange-500/35',
-    remoteok: 'bg-sky-500/20 text-sky-200 ring-1 ring-inset ring-sky-500/35',
-    rss: 'bg-emerald-500/20 text-emerald-200 ring-1 ring-inset ring-emerald-500/35',
-    jobicy: 'bg-fuchsia-500/20 text-fuchsia-200 ring-1 ring-inset ring-fuchsia-500/35',
-    greenhouse: 'bg-lime-500/15 text-lime-200 ring-1 ring-inset ring-lime-500/35',
+    remotive: 'bg-violet-100 text-violet-800 ring-1 ring-inset ring-violet-200/80 dark:bg-violet-500/20 dark:text-violet-200 dark:ring-violet-500/40',
+    arbeitnow: 'bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-200/90 dark:bg-amber-500/20 dark:text-amber-200 dark:ring-amber-500/35',
+    hn: 'bg-orange-100 text-orange-900 ring-1 ring-inset ring-orange-200/80 dark:bg-orange-500/20 dark:text-orange-200 dark:ring-orange-500/35',
+    remoteok: 'bg-sky-100 text-sky-900 ring-1 ring-inset ring-sky-200/80 dark:bg-sky-500/20 dark:text-sky-200 dark:ring-sky-500/35',
+    rss: 'bg-emerald-100 text-emerald-900 ring-1 ring-inset ring-emerald-200/80 dark:bg-emerald-500/20 dark:text-emerald-200 dark:ring-emerald-500/35',
+    jobicy: 'bg-fuchsia-100 text-fuchsia-900 ring-1 ring-inset ring-fuchsia-200/80 dark:bg-fuchsia-500/20 dark:text-fuchsia-200 dark:ring-fuchsia-500/35',
+    greenhouse: 'bg-lime-100 text-lime-900 ring-1 ring-inset ring-lime-200/80 dark:bg-lime-500/15 dark:text-lime-200 dark:ring-lime-500/35',
   }
-  return map[src] ?? 'bg-slate-500/20 text-slate-300 ring-1 ring-inset ring-slate-500/30'
+  return map[src] ?? 'bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-200 dark:bg-slate-500/20 dark:text-slate-200 dark:ring-slate-500/30'
+}
+
+function formatJobDate(v: string | null | undefined): string {
+  if (!v || typeof v !== 'string')
+    return '—'
+  const d = new Date(v)
+  if (Number.isNaN(d.getTime()))
+    return '—'
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 const jobTableHeaders = [
@@ -248,6 +267,9 @@ const tableSortBy = computed({
 })
 
 const jobTableItemsPerPageOptions = [25, 50, 80, 100, 200] as const
+const pageSizeSelectOptions = computed(() =>
+  jobTableItemsPerPageOptions.map(n => ({ value: n, label: String(n) })),
+)
 
 const REPO_URL = 'https://github.com/god-plans/god-jobs'
 const SPONSOR_URL = 'https://github.com/sponsors/parsajiravand'
@@ -370,87 +392,94 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-24 md:pb-0 lg:p-8 p-4">
+  <div class="space-y-6 p-4 pb-24 md:pb-0 lg:px-8">
     <!-- Hero -->
     <div class="flex flex-col gap-4 border-b pb-6" style="border-color: var(--gk-color-border)">
-      <div class="min-w-0 flex-1 space-y-2">
-        <div class="flex flex-wrap items-center gap-3">
-          <AppLogo :as-link="false" size="sm" :show-wordmark="false" />
-          <h1 class="text-3xl font-semibold tracking-tight" style="color: var(--gk-color-on-surface)">
-            Job board
-          </h1>
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="min-w-0 flex-1 space-y-2">
+          <div class="flex flex-wrap items-center gap-3">
+            <AppLogo :as-link="false" size="sm" :show-wordmark="false" />
+            <h1 class="text-3xl font-semibold tracking-tight" style="color: var(--gk-color-on-surface)">
+              Job board
+            </h1>
+          </div>
+          <p class="text-sm" style="color: var(--gk-color-on-surface-variant)">
+            Search aggregated listings from multiple feeds. Use categories and filters to narrow results, then open each
+            role at its source.
+          </p>
+          <p class="text-xs" style="color: var(--gk-color-on-surface-variant)">
+            <NuxtLink to="/" class="underline opacity-90" style="color: var(--gk-color-primary)">← Back to home
+            </NuxtLink>
+          </p>
         </div>
-        <p class="text-sm" style="color: var(--gk-color-on-surface-variant)">
-          Search aggregated listings from multiple feeds. Use categories and filters to narrow results, then open each role at its source.
-        </p>
-        <p class="text-xs" style="color: var(--gk-color-on-surface-variant)">
-          <NuxtLink to="/" class="underline opacity-90" style="color: var(--gk-color-primary)">← Back to home</NuxtLink>
-        </p>
-        <GkExpansionPanels v-model="aboutExpanded" :multiple="true">
-          <GkExpansionPanel value="sources">
-            <GkExpansionPanelTitle>
-              About sources &amp; export
-            </GkExpansionPanelTitle>
-            <GkExpansionPanelText>
-              <p class="max-w-2xl leading-relaxed" style="color: var(--gk-color-on-surface-variant)">
-                Built-in APIs: Remotive, Arbeitnow, Remote OK, Jobicy (remote), filtered HN Algolia, and RSS/Atom (e.g. Telegram via
-                <a href="https://github.com/DIYgod/RSSHub" class="underline" style="color: var(--gk-color-primary)" target="_blank" rel="noopener noreferrer">RSSHub</a>).
-                Greenhouse has no “all companies” API—only per-board URLs. Set <code class="gj-mono-inline rounded px-1" style="background: var(--gk-color-surface-elevated)">NUXT_JOBS_GREENHOUSE_BOARDS</code> to comma-separated <code class="gj-mono-inline rounded px-1" style="background: var(--gk-color-surface-elevated)">boards.greenhouse.io/{token}</code> slugs, or use <code class="gj-mono-inline rounded px-1" style="background: var(--gk-color-surface-elevated)">curated</code> to merge a built-in verified pack, or <code class="gj-mono-inline rounded px-1" style="background: var(--gk-color-surface-elevated)">NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL</code> for a hosted text list of tokens.
-                Without <code class="gj-mono-inline rounded px-1" style="background: var(--gk-color-surface-elevated)">NUXT_JOBS_RSS_FEEDS</code>, RSS sync uses a default public feed (We Work Remotely).
-                LinkedIn and most large job sites do not offer a stable public API for open aggregation; use RSS where a site publishes a feed, or route listings you are allowed to republish through your own connector.
-              </p>
-              <p class="mt-2 flex flex-wrap gap-3">
-                <a href="/api/export/jobs" class="underline" style="color: var(--gk-color-primary)">Download JSON</a>
-                <a href="/api/export/jobs?format=csv" class="underline" style="color: var(--gk-color-primary)">Download CSV</a>
-              </p>
-            </GkExpansionPanelText>
-          </GkExpansionPanel>
-        </GkExpansionPanels>
-        <p v-if="data?.meta?.lastSync" class="text-xs" style="color: var(--gk-color-on-surface-variant)">
-          Last row update: {{ data.meta.lastSync }} · Total matching: {{ data.meta.total }}
-        </p>
+        <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
+          <GkButton type="button" class="w-full sm:w-auto" :disabled="syncing" :loading="syncing" @click="runSync">
+            {{ syncing ? 'Syncing…' : 'Sync jobs' }}
+          </GkButton>
+          <GkButton type="button" class="w-full sm:w-auto" variant="secondary" :disabled="pending" @click="refresh()">
+            Refresh
+          </GkButton>
+        </div>
       </div>
-      <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
-        <GkButton
-          type="button"
-          class="w-full sm:w-auto"
-          :disabled="syncing"
-          :loading="syncing"
-          @click="runSync"
-        >
-          {{ syncing ? 'Syncing…' : 'Sync jobs' }}
-        </GkButton>
-        <GkButton type="button" class="w-full sm:w-auto" variant="secondary" :disabled="pending" @click="refresh()">
-          Refresh
-        </GkButton>
-      </div>
+      <GkExpansionPanels v-model="aboutExpanded" :multiple="true">
+        <GkExpansionPanel value="sources">
+          <GkExpansionPanelTitle>
+            About sources &amp; export
+          </GkExpansionPanelTitle>
+          <GkExpansionPanelText>
+            <p class="max-w-2xl leading-relaxed" style="color: var(--gk-color-on-surface-variant)">
+              Built-in APIs: Remotive, Arbeitnow, Remote OK, Jobicy (remote), filtered HN Algolia, and RSS/Atom (e.g.
+              Telegram via
+              <a href="https://github.com/DIYgod/RSSHub" class="underline" style="color: var(--gk-color-primary)"
+                target="_blank" rel="noopener noreferrer">RSSHub</a>).
+              Greenhouse has no “all companies” API—only per-board URLs. Set <code class="gj-mono-inline rounded px-1"
+                style="background: var(--gk-color-surface-elevated)">NUXT_JOBS_GREENHOUSE_BOARDS</code> to
+              comma-separated <code class="gj-mono-inline rounded px-1"
+                style="background: var(--gk-color-surface-elevated)">boards.greenhouse.io/{token}</code> slugs, or use
+              <code class="gj-mono-inline rounded px-1"
+                style="background: var(--gk-color-surface-elevated)">curated</code> to merge a built-in verified pack,
+              or <code class="gj-mono-inline rounded px-1"
+                style="background: var(--gk-color-surface-elevated)">NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL</code> for a
+              hosted text list of tokens.
+              Without <code class="gj-mono-inline rounded px-1"
+                style="background: var(--gk-color-surface-elevated)">NUXT_JOBS_RSS_FEEDS</code>, RSS sync uses a default
+              public feed (We Work Remotely).
+              LinkedIn and most large job sites do not offer a stable public API for open aggregation; use RSS where a
+              site publishes a feed, or route listings you are allowed to republish through your own connector.
+            </p>
+            <p class="mt-2 flex flex-wrap gap-3">
+              <a href="/api/export/jobs" class="underline" style="color: var(--gk-color-primary)">Download JSON</a>
+              <a href="/api/export/jobs?format=csv" class="underline" style="color: var(--gk-color-primary)">Download
+                CSV</a>
+            </p>
+          </GkExpansionPanelText>
+        </GkExpansionPanel>
+      </GkExpansionPanels>
+      <p v-if="data?.meta?.lastSync" class="text-xs" style="color: var(--gk-color-on-surface-variant)">
+        Last row update: {{ new Date(data.meta.lastSync).toLocaleString() }} · Total matching: {{ data.meta.total }}
+      </p>
     </div>
 
-    <GkAlert v-if="syncMsg" :text="syncMsg" class="!my-0" :variant="syncMsg.includes('error') || syncMsg.includes('failed') || syncMsg.includes('Error') ? 'danger' : 'neutral'" />
+    <GkAlert v-if="syncMsg" :text="syncMsg" class="!my-0"
+      :variant="syncMsg.includes('error') || syncMsg.includes('failed') || syncMsg.includes('Error') ? 'danger' : 'neutral'" />
     <GkAlert v-if="error" :text="String(error?.message || error)" class="!my-0" variant="danger" />
 
     <!-- Desktop filters -->
-    <div
-      class="hidden flex-col space-y-3 md:sticky md:top-0 md:z-10 md:flex md:overflow-visible md:p-5"
-      :class="['gj-surface', 'gj-surface--raised', 'rounded-[var(--gk-radius-lg)]']"
-      style="backface-visibility: hidden"
-      role="region"
-      aria-label="Job search and filters"
-    >
+    <div class="hidden flex-col space-y-3 md:sticky md:top-0 md:z-10 md:flex md:overflow-visible md:p-5"
+      :class="['gj-surface', 'gj-surface--raised', 'rounded-[var(--gk-radius-lg)]']" style="backface-visibility: hidden"
+      role="region" aria-label="Job search and filters">
       <JobsJobFiltersForm v-model="filters" />
-      <div v-if="hasActiveFilters" class="flex w-full shrink-0 justify-end border-t pt-3" style="border-color: var(--gk-color-border)">
+      <div v-if="hasActiveFilters" class="flex w-full shrink-0 justify-end border-t pt-3"
+        style="border-color: var(--gk-color-border)">
         <GkButton type="button" variant="ghost" @click="clearFilters">
           Clear all filters
         </GkButton>
       </div>
     </div>
 
-    <GkBottomSheet
-      v-model="mobileFiltersOpen"
-      inset
-      aria-labelledby="mobile-filters-title"
-    >
-      <div class="mb-3 flex items-center justify-between gap-3 border-b pb-3" style="border-color: var(--gk-color-border)">
+    <GkBottomSheet v-model="mobileFiltersOpen" inset aria-labelledby="mobile-filters-title">
+      <div class="mb-3 flex items-center justify-between gap-3 border-b pb-3"
+        style="border-color: var(--gk-color-border)">
         <h2 id="mobile-filters-title" class="text-base font-semibold" style="color: var(--gk-color-on-surface)">
           Search &amp; filters
         </h2>
@@ -467,115 +496,74 @@ onBeforeUnmount(() => {
     </GkBottomSheet>
 
     <!-- Mobile: fixed entry to search & filters -->
-    <div
-      v-show="!mobileFiltersOpen"
-      class="fixed inset-x-0 bottom-0 z-50 border-t shadow-lg md:hidden"
-      style="
+    <div v-show="!mobileFiltersOpen" class="fixed inset-x-0 bottom-0 z-50 border-t shadow-lg md:hidden" style="
         background: var(--gk-color-surface-elevated);
         border-color: var(--gk-color-border);
         padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
         box-shadow: 0 -12px 40px color-mix(in srgb, #000 35%, transparent);
-      "
-    >
+      ">
       <div class="mx-auto max-w-6xl px-4 pt-3">
-        <GkButton
-          type="button"
-          block
-          variant="secondary"
-          aria-haspopup="dialog"
-          :aria-expanded="mobileFiltersOpen"
-          aria-controls="jobs-filters-panel"
-          @click="mobileFiltersOpen = true"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" style="color: var(--gk-color-primary)" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+        <GkButton type="button" block variant="secondary" aria-haspopup="dialog" :aria-expanded="mobileFiltersOpen"
+          aria-controls="jobs-filters-panel" @click="mobileFiltersOpen = true">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="h-5 w-5" style="color: var(--gk-color-primary)" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
           <span>Search &amp; filters</span>
-          <span
-            v-if="hasActiveFilters"
-            class="rounded-full px-2 py-0.5 text-xs font-semibold"
-            style="background: var(--gk-color-primary); color: var(--gk-color-on-primary)"
-          >
+          <span v-if="hasActiveFilters" class="rounded-full px-2 py-0.5 text-xs font-semibold"
+            style="background: var(--gk-color-primary); color: var(--gk-color-on-primary)">
             Active
           </span>
         </GkButton>
       </div>
     </div>
 
-    <div
-      ref="resultsSentinel"
-      class="pointer-events-none h-1 w-full shrink-0"
-      aria-hidden="true"
-    />
+    <div ref="resultsSentinel" class="pointer-events-none h-1 w-full shrink-0" aria-hidden="true" />
 
     <div class="gj-surface gj-surface--raised jobs-list-table-wrap overflow-hidden">
-      <GkDataTable
-        mode="server"
-        v-model:page="page"
-        v-model:items-per-page="pageSize"
-        v-model:sort-by="tableSortBy"
-        :headers="[...jobTableHeaders]"
-        :items="jobTableItems"
-        :items-length="total"
-        :loading="pending"
-        :items-per-page-options="[...jobTableItemsPerPageOptions]"
-        item-value="id"
-        caption="Job listings"
-        density="compact"
-        striped
-        mobile="auto"
-        fixed-header
-        :max-height="560"
-        :bordered="false"
-        class="jobs-gk-data-table"
-      >
+      <GkDataTable mode="server" v-model:page="page" v-model:items-per-page="pageSize" v-model:sort-by="tableSortBy"
+        :headers="[...jobTableHeaders]" :items="jobTableItems" :items-length="total" :loading="pending"
+        :items-per-page-options="[...jobTableItemsPerPageOptions]" hide-default-footer item-value="id"
+        caption="Job listings" density="comfortable" striped mobile="auto" fixed-header :max-height="'min(70vh, 40rem)'"
+        :bordered="false" class="jobs-gk-data-table">
         <template #item.source="{ item }">
-          <span
-            class="gj-pill inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
-            :class="sourcePillClass(String(item.source ?? ''))"
-          >
+          <span class="gj-pill inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
+            :class="sourcePillClass(String(item.source ?? ''))">
             {{ item.source }}
           </span>
         </template>
         <template #item.title="{ item }">
           <div class="min-w-0 max-w-md">
-            <a
-              :href="String(item.url ?? '#')"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="font-medium"
-              style="color: var(--gk-color-primary)"
-            >
+            <a :href="String(item.url ?? '#')" target="_blank" rel="noopener noreferrer" class="font-medium"
+              style="color: var(--gk-color-primary)">
               {{ item.title }}
             </a>
-            <p
-              v-if="item.snippet"
-              class="mt-1 line-clamp-2 text-xs"
-              style="color: var(--gk-color-on-surface-variant)"
-            >
-              {{ item.snippet }}
-            </p>
+            <p v-if="item.snippet" class="mt-1 line-clamp-2 text-xs" style="color: var(--gk-color-on-surface-variant)"
+              v-html="item.snippet" />
           </div>
         </template>
         <template #item.location="{ item }">
-          <span class="max-w-xs truncate" style="color: var(--gk-color-on-surface-variant)">{{ item.location ?? '—' }}</span>
+          <span class="max-w-xs truncate" style="color: var(--gk-color-on-surface-variant)">{{ item.location ?? '—'
+            }}</span>
         </template>
         <template #item.updatedAt="{ item }">
-          <span class="whitespace-nowrap text-xs tabular-nums" style="color: var(--gk-color-on-surface-variant)">
-            {{ typeof item.updatedAt === 'string' ? item.updatedAt.slice(0, 16) : '—' }}
-          </span>
+          <time class="whitespace-nowrap text-xs"
+            :datetime="typeof item.updatedAt === 'string' ? item.updatedAt : undefined"
+            style="color: var(--gk-color-on-surface-variant)">
+            {{ formatJobDate(item.updatedAt as string | null | undefined) }}
+          </time>
         </template>
         <template #item.postedAt="{ item }">
-          <span class="whitespace-nowrap text-xs tabular-nums" style="color: var(--gk-color-on-surface-variant)">
-            {{ item.postedAt && typeof item.postedAt === 'string' ? item.postedAt.slice(0, 16) : '—' }}
-          </span>
+          <time class="whitespace-nowrap text-xs"
+            :datetime="typeof item.postedAt === 'string' ? item.postedAt : undefined"
+            style="color: var(--gk-color-on-surface-variant)">
+            {{ formatJobDate(item.postedAt as string | null | undefined) }}
+          </time>
         </template>
         <template #no-data>
-          <div
-            v-if="!pending"
-            class="rounded-md border border-dashed px-4 py-12 text-center text-sm"
-            style="color: var(--gk-color-on-surface-variant); border-color: var(--gk-color-border)"
-          >
+          <div v-if="!pending" class="rounded-md border border-dashed px-4 py-12 text-center text-sm"
+            style="color: var(--gk-color-on-surface-variant); border-color: var(--gk-color-border)">
             <p>No jobs match these filters.</p>
             <p v-if="!hasActiveFilters" class="mt-2" style="color: var(--gk-color-on-surface)">
               Sync first to load listings from external sources, or click “Sync jobs” above.
@@ -585,15 +573,31 @@ onBeforeUnmount(() => {
             </GkButton>
           </div>
         </template>
+        <template #bottom>
+          <div class="jobs-gk-table-bottom" role="navigation" aria-label="Job list pagination">
+            <p class="jobs-gk-table-bottom__summary">
+              <span v-if="total > 0">Rows {{ showingFrom }}–{{ showingTo }} of {{ total }}</span>
+              <span v-else> No matching rows </span>
+            </p>
+            <div class="jobs-gk-table-bottom__controls">
+              <div class="flex min-w-0 max-w-full flex-wrap items-end gap-2 sm:items-center">
+                <span id="jobs-page-size-lbl" class="shrink-0 text-sm font-medium"
+                  style="color: var(--gk-color-on-surface-variant)">Rows per page</span>
+                <GkField label-sr-only label="Rows per page" class="!mb-0 min-w-0 flex-1 shrink-0">
+                  <GkSelect v-model="pageSize" :options="pageSizeSelectOptions" aria-labelledby="jobs-page-size-lbl" />
+                </GkField>
+              </div>
+              <div class="jobs-gk-table-bottom__pagination">
+                <GkPagination v-model="page" :length="pageCount" :disabled="pending" :total-visible="7"
+                  show-first-last-page />
+              </div>
+            </div>
+          </div>
+        </template>
       </GkDataTable>
     </div>
 
-    <GkDialog
-      v-model="contributeDialogOpen"
-      aria-labelledby="jobs-contribute-title"
-      :max-width="480"
-      scrollable
-    >
+    <GkDialog v-model="contributeDialogOpen" aria-labelledby="jobs-contribute-title" :max-width="480" scrollable>
       <h2 id="jobs-contribute-title" class="text-lg font-semibold" style="color: var(--gk-color-on-surface)">
         Enjoying God Jobs?
       </h2>
@@ -609,12 +613,8 @@ onBeforeUnmount(() => {
         </GkButton>
       </div>
       <p class="mt-4 text-sm" style="color: var(--gk-color-on-surface-variant)">
-        <button
-          type="button"
-          class="cursor-pointer border-0 bg-transparent p-0 underline"
-          style="color: var(--gk-color-on-surface)"
-          @click="closeContributeDialog()"
-        >
+        <button type="button" class="cursor-pointer border-0 bg-transparent p-0 underline"
+          style="color: var(--gk-color-on-surface)" @click="closeContributeDialog()">
           Maybe later
         </button>
       </p>

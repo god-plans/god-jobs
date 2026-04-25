@@ -14,6 +14,17 @@ watch(() => route.fullPath, () => {
 })
 
 const theme = useGkTheme()
+const THEME_CYCLE = ['light', 'dark', 'system'] as const
+
+function cycleTheme() {
+  const n = String(theme.name.value) as (typeof THEME_CYCLE)[number]
+  let i = THEME_CYCLE.indexOf(n)
+  if (i < 0)
+    i = 0
+  const next = THEME_CYCLE[(i + 1) % THEME_CYCLE.length]!
+  theme.change(next)
+}
+
 const themeColor = computed(() =>
   theme.isDark.value ? '#020617' : '#f8fafc',
 )
@@ -58,52 +69,51 @@ useHead({
           </a>
         </nav>
         <div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <div
-            class="hidden items-center gap-0.5 rounded-lg p-0.5 sm:flex"
-            style="background: color-mix(in srgb, var(--gk-color-on-surface) 6%, transparent)"
-            title="Color theme"
-            role="group"
-            aria-label="Color theme"
-          >
+          <div class="hidden sm:block">
             <GkButton
               type="button"
               variant="ghost"
               size="sm"
-              class="gj-theme-icon-btn"
-              :class="{ 'gj-theme-icon-btn--active': theme.name.value === 'light' }"
-              :aria-pressed="theme.name.value === 'light'"
-              aria-label="Light theme"
-              @click="theme.change('light')"
+              class="gj-theme-icon-btn !rounded-lg"
+              style="box-shadow: 0 0 0 1px color-mix(in srgb, var(--gk-color-on-surface) 10%, transparent)"
+              :title="`Theme: ${String(theme.name.value)}. Click to cycle`"
+              :aria-label="`Color theme: ${String(theme.name.value)}. Click to cycle light, dark, and system`"
+              @click="cycleTheme"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+              <svg
+                v-if="theme.name.value === 'light'"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="h-5 w-5"
+                aria-hidden="true"
+              >
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
               </svg>
-            </GkButton>
-            <GkButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="gj-theme-icon-btn"
-              :class="{ 'gj-theme-icon-btn--active': theme.name.value === 'dark' }"
-              :aria-pressed="theme.name.value === 'dark'"
-              aria-label="Dark theme"
-              @click="theme.change('dark')"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+              <svg
+                v-else-if="theme.name.value === 'dark'"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="h-5 w-5"
+                aria-hidden="true"
+              >
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
               </svg>
-            </GkButton>
-            <GkButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="gj-theme-icon-btn"
-              :class="{ 'gj-theme-icon-btn--active': theme.name.value === 'system' }"
-              :aria-pressed="theme.name.value === 'system'"
-              aria-label="System theme"
-              @click="theme.change('system')"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+              <svg
+                v-else
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="h-5 w-5"
+                aria-hidden="true"
+              >
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -160,57 +170,58 @@ useHead({
         class="border-t px-4 py-3 md:hidden"
         style="border-color: color-mix(in srgb, var(--gk-color-on-surface) 12%, transparent); background: var(--gk-color-surface-elevated)"
       >
-        <div
-          class="mb-2 flex items-center justify-center gap-0.5 rounded-lg p-0.5 sm:hidden"
-          style="background: color-mix(in srgb, var(--gk-color-on-surface) 6%, transparent)"
-          role="group"
-          aria-label="Color theme (mobile)"
-        >
+        <div class="mb-3 flex justify-center sm:hidden">
           <GkButton
             type="button"
             variant="ghost"
             size="sm"
-            class="gj-theme-icon-btn"
-            :class="{ 'gj-theme-icon-btn--active': theme.name.value === 'light' }"
-            :aria-pressed="theme.name.value === 'light'"
-            aria-label="Light theme"
-            @click="theme.change('light')"
+            class="gj-theme-icon-btn w-full !max-w-xs !justify-center !rounded-lg"
+            style="box-shadow: 0 0 0 1px color-mix(in srgb, var(--gk-color-on-surface) 10%, transparent)"
+            :title="`Theme: ${String(theme.name.value)}. Click to cycle`"
+            :aria-label="`Color theme: ${String(theme.name.value)}. Click to cycle`"
+            @click="cycleTheme"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+            <svg
+              v-if="theme.name.value === 'light'"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="h-5 w-5"
+              aria-hidden="true"
+            >
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
             </svg>
-          </GkButton>
-          <GkButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            class="gj-theme-icon-btn"
-            :class="{ 'gj-theme-icon-btn--active': theme.name.value === 'dark' }"
-            :aria-pressed="theme.name.value === 'dark'"
-            aria-label="Dark theme"
-            @click="theme.change('dark')"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+            <svg
+              v-else-if="theme.name.value === 'dark'"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="h-5 w-5"
+              aria-hidden="true"
+            >
               <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
             </svg>
-          </GkButton>
-          <GkButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            class="gj-theme-icon-btn"
-            :class="{ 'gj-theme-icon-btn--active': theme.name.value === 'system' }"
-            :aria-pressed="theme.name.value === 'system'"
-            aria-label="System theme"
-            @click="theme.change('system')"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+            <svg
+              v-else
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="h-5 w-5"
+              aria-hidden="true"
+            >
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 d="M9 17.25v1.007a3 3 0 0 0 .879 2.122L11.5 22h1l1.621-1.626A3 3 0 0 0 15 18.257V17.25m0 0H9m6 0h1.5a2.25 2.25 0 0 0 2.25-2.25V6a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6v9a2.25 2.25 0 0 0 2.25 2.25H9"
               />
             </svg>
+            <span class="ml-2 text-sm capitalize" style="color: var(--gk-color-on-surface)">{{ String(theme.name.value) }} theme</span>
           </GkButton>
         </div>
         <nav class="flex flex-col gap-1 text-sm" aria-label="Mobile main">

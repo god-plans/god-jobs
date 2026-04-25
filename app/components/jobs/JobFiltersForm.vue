@@ -131,7 +131,8 @@ function toggleCategory(id: string) {
                 @update:model-value="setSortField"
               />
               <GkSelect
-                class="w-20 shrink-0"
+              class="min-w-0 flex-1"
+           
                 :model-value="sortOrderModel()"
                 :options="[...sortOrderOptions]"
                 @update:model-value="setSortOrder"

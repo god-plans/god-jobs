@@ -9,8 +9,17 @@
 }
 
 /**
- * God Jobs: emerald primary in dark (legacy brand) — loaded after god-kit/tokens.css.
+ * God Jobs: emerald / success primary (light + dark) — overrides default purple in tokens.
  */
+:root,
+.gj-app-root {
+  --gk-color-primary: var(--gk-palette-success-600);
+  --gk-color-primary-hover: var(--gk-palette-success-500);
+  --gk-color-primary-active: var(--gk-palette-success-700);
+  --gk-color-text-on-primary: #ffffff;
+  --gk-color-focus-ring: rgba(3, 152, 85, 0.35);
+}
+
 .dark,
 html.dark,
 :root[data-gk-theme='dark'],
@@ -18,7 +27,6 @@ html.dark,
   --gk-color-primary: var(--gk-palette-success-500);
   --gk-color-primary-hover: var(--gk-palette-success-400);
   --gk-color-primary-active: var(--gk-palette-success-600);
-  --gk-color-text-on-primary: #ffffff;
   --gk-color-focus-ring: rgba(18, 183, 106, 0.45);
 }
 
@@ -151,4 +159,72 @@ html.dark,
   letter-spacing: 0.05em;
   line-height: 1.2;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--gk-color-on-surface) 25%, transparent);
+}
+
+/* GkDataTable: custom bottom footer (replaces default so page buttons stay compact). */
+.jobs-gk-table-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+  border-top: 1px solid var(--gk-color-border);
+  background: var(--gk-color-surface-elevated);
+  padding: var(--gk-space-4, 1rem) var(--gk-space-4, 1rem) var(--gk-space-5, 1.25rem);
+}
+
+@media (min-width: 640px) {
+  .jobs-gk-table-bottom {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.jobs-gk-table-bottom__summary {
+  font-size: var(--gk-text-body-s-size, 0.875rem);
+  line-height: 1.4;
+  color: var(--gk-color-on-surface-variant, var(--gk-color-on-surface-muted));
+  min-width: 0;
+}
+
+.jobs-gk-table-bottom__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+@media (min-width: 640px) {
+  .jobs-gk-table-bottom__controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    column-gap: 1.5rem;
+    row-gap: 0.5rem;
+  }
+}
+
+/* Keep pagination on one line; allow horizontal scroll on very small screens. */
+.jobs-gk-table-bottom__pagination {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 0.125rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.jobs-gk-table-bottom__pagination :deep(.gk-pagination__list) {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+/* Slightly more breathing room in dense job table cells. */
+.jobs-gk-data-table :deep(.gk-data-table__cell) {
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+  vertical-align: top;
 }
