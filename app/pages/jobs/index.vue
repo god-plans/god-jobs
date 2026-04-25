@@ -16,6 +16,7 @@ import {
   GkSelect,
   pushGkSnackbar,
 } from 'god-kit/vue'
+import { useGkTheme } from 'god-kit/vue/config'
 
 useSiteSeo({
   title: 'Job board — Search remote & on-site jobs',
@@ -201,17 +202,47 @@ function remoteLabel(job: JobListing) {
   return '—'
 }
 
+/** Pills: split by `gkTheme` — Tailwind `dark:` uses OS `prefers-color-scheme`, not God Kit `data-gk-theme`, which could wash out or wrong-style labels. */
+const SOURCE_PILL: Record<string, { light: string, dark: string }> = {
+  remotive: {
+    light: 'bg-violet-100 text-violet-800 ring-1 ring-inset ring-violet-200/80',
+    dark: 'bg-violet-500/20 text-violet-200 ring-1 ring-inset ring-violet-500/40',
+  },
+  arbeitnow: {
+    light: 'bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-200/90',
+    dark: 'bg-amber-500/20 text-amber-200 ring-1 ring-inset ring-amber-500/35',
+  },
+  hn: {
+    light: 'bg-orange-100 text-orange-900 ring-1 ring-inset ring-orange-200/80',
+    dark: 'bg-orange-500/20 text-orange-200 ring-1 ring-inset ring-orange-500/35',
+  },
+  remoteok: {
+    light: 'bg-sky-100 text-sky-900 ring-1 ring-inset ring-sky-200/80',
+    dark: 'bg-sky-500/20 text-sky-200 ring-1 ring-inset ring-sky-500/35',
+  },
+  rss: {
+    light: 'bg-emerald-100 text-emerald-900 ring-1 ring-inset ring-emerald-200/80',
+    dark: 'bg-emerald-500/20 text-emerald-200 ring-1 ring-inset ring-emerald-500/35',
+  },
+  jobicy: {
+    light: 'bg-fuchsia-100 text-fuchsia-900 ring-1 ring-inset ring-fuchsia-200/80',
+    dark: 'bg-fuchsia-500/20 text-fuchsia-200 ring-1 ring-inset ring-fuchsia-500/35',
+  },
+  greenhouse: {
+    light: 'bg-lime-100 text-lime-900 ring-1 ring-inset ring-lime-200/80',
+    dark: 'bg-lime-500/15 text-lime-200 ring-1 ring-inset ring-lime-500/35',
+  },
+}
+
+const SOURCE_PILL_DEFAULT = {
+  light: 'bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-200',
+  dark: 'bg-slate-500/20 text-slate-200 ring-1 ring-inset ring-slate-500/30',
+} as const
+
 function sourcePillClass(src: string) {
-  const map: Record<string, string> = {
-    remotive: 'bg-violet-100 text-violet-800 ring-1 ring-inset ring-violet-200/80 dark:bg-violet-500/20 dark:text-violet-200 dark:ring-violet-500/40',
-    arbeitnow: 'bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-200/90 dark:bg-amber-500/20 dark:text-amber-200 dark:ring-amber-500/35',
-    hn: 'bg-orange-100 text-orange-900 ring-1 ring-inset ring-orange-200/80 dark:bg-orange-500/20 dark:text-orange-200 dark:ring-orange-500/35',
-    remoteok: 'bg-sky-100 text-sky-900 ring-1 ring-inset ring-sky-200/80 dark:bg-sky-500/20 dark:text-sky-200 dark:ring-sky-500/35',
-    rss: 'bg-emerald-100 text-emerald-900 ring-1 ring-inset ring-emerald-200/80 dark:bg-emerald-500/20 dark:text-emerald-200 dark:ring-emerald-500/35',
-    jobicy: 'bg-fuchsia-100 text-fuchsia-900 ring-1 ring-inset ring-fuchsia-200/80 dark:bg-fuchsia-500/20 dark:text-fuchsia-200 dark:ring-fuchsia-500/35',
-    greenhouse: 'bg-lime-100 text-lime-900 ring-1 ring-inset ring-lime-200/80 dark:bg-lime-500/15 dark:text-lime-200 dark:ring-lime-500/35',
-  }
-  return map[src] ?? 'bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-200 dark:bg-slate-500/20 dark:text-slate-200 dark:ring-slate-500/30'
+  const key = useGkTheme().isDark.value ? 'dark' : 'light'
+  const entry = SOURCE_PILL[src]
+  return (entry ? entry[key] : SOURCE_PILL_DEFAULT[key]) as string
 }
 
 function formatJobDate(v: string | null | undefined): string {
@@ -392,7 +423,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-6 p-4 pb-32 md:pb-10 lg:px-8">
+  <div class="space-y-6 p-4 pb-32 ">
     <!-- Hero -->
     <div class="flex flex-col gap-4 border-b pb-6" style="border-color: var(--gk-color-border)">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -465,7 +496,7 @@ onBeforeUnmount(() => {
     <GkAlert v-if="error" :text="String(error?.message || error)" class="!my-0" variant="danger" />
 
     <!-- Desktop filters -->
-    <div class="hidden flex-col space-y-3 md:sticky md:top-0 md:z-10 md:flex md:overflow-visible md:p-5"
+    <div class="hidden flex-col space-y-3  md:top-0 md:z-10 md:flex md:overflow-visible md:p-5"
       :class="['gj-surface', 'gj-surface--raised', 'rounded-[var(--gk-radius-lg)]']" style="backface-visibility: hidden"
       role="region" aria-label="Job search and filters">
       <JobsJobFiltersForm v-model="filters" />
@@ -528,7 +559,7 @@ onBeforeUnmount(() => {
         caption="Job listings" density="comfortable" striped mobile="auto" fixed-header :max-height="'min(78vh, 44rem)'"
         :bordered="false" class="jobs-gk-data-table">
         <template #item.source="{ item }">
-          <span class="gj-pill inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
+          <span class="gj-pill inline-flex rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
             :class="sourcePillClass(String(item.source ?? ''))">
             {{ item.source }}
           </span>

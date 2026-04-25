@@ -27,8 +27,17 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    resolve: {
+      /** One physical `god-kit` + `vue` (avoids duplicate `injection` symbols and broken `GK_FORM_CONTROLS`). */
+      dedupe: ['god-kit', 'vue'],
+    },
+    /** Bundle god-kit in the SSR graph (single dep graph, fewer duplicate Vue/plugin instances). */
     ssr: {
-      noExternal: ['papaparse'],
+      noExternal: ['god-kit', 'papaparse'],
+    },
+    /** Prebundle these entry points for more predictable dev client resolution. */
+    optimizeDeps: {
+      include: ['god-kit/vue', 'god-kit/vue/config'],
     },
   },
 
