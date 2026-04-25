@@ -7,6 +7,26 @@ function useNetlifyNitroPreset() {
   )
 }
 
+/** First non-empty trimmed string for `runtimeConfig` defaults. Nitro still overrides with `NUXT_*` at server start. */
+function jobEnv(...candidates: Array<string | undefined | null>): string {
+  for (const c of candidates) {
+    if (c == null) continue
+    const t = String(c).trim()
+    if (t !== '') return t
+  }
+  return ''
+}
+
+/** True if any candidate is 1 / true / yes (case-insensitive). */
+function jobEnvBool(...candidates: Array<string | undefined | null>): boolean {
+  for (const c of candidates) {
+    if (c == null) continue
+    const v = String(c).trim().toLowerCase()
+    if (v === '1' || v === 'true' || v === 'yes') return true
+  }
+  return false
+}
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -47,21 +67,43 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    /** Newline- or comma-separated RSS/Atom URLs (e.g. RSSHub `…/telegram/channel/:username`). Override with env `NUXT_JOBS_RSS_FEEDS`. */
-    jobsRssFeeds: '',
-    /** Comma-separated Greenhouse board tokens, or keyword `curated` for a built-in pack. Env: `NUXT_JOBS_GREENHOUSE_BOARDS`. */
-    jobsGreenhouseBoards: '',
-    /** Optional URL to a plain-text list of board tokens (one per line; `#` comments ok). Env: `NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL`. */
-    jobsGreenhouseBoardListUrl: '',
-    /** Override User-Agent for job connector HTTP requests if a provider returns 403 on your host (e.g. Remote OK on some VPS IPs). Env: `NUXT_JOBS_FETCH_USER_AGENT`. */
-    jobsFetchUserAgent: '',
-    /** HTTP(S) proxy URL for job sync outbound requests (Undici). Env: `NUXT_JOBS_HTTPS_PROXY`. Use if Remote OK returns 403 from your host’s IP. */
-    jobsHttpsProxy: '',
-    /** Set `true` to skip CodeTabs JSON proxy when Remote OK API returns 403. Env: `NUXT_JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK`. */
-    jobsRemoteokDisableCodetabsFallback: false,
+    /**
+     * `NUXT_JOBS_RSS_FEEDS` or `JOBS_RSS_FEEDS` — newline- or comma-separated RSS/Atom URLs (e.g. RSSHub).
+     */
+    jobsRssFeeds: jobEnv(process.env.NUXT_JOBS_RSS_FEEDS, process.env.JOBS_RSS_FEEDS),
+    /**
+     * `NUXT_JOBS_GREENHOUSE_BOARDS` or `JOBS_GREENHOUSE_BOARDS` — board tokens or keyword `curated`.
+     */
+    jobsGreenhouseBoards: jobEnv(process.env.NUXT_JOBS_GREENHOUSE_BOARDS, process.env.JOBS_GREENHOUSE_BOARDS),
+    /**
+     * `NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL` or `JOBS_GREENHOUSE_BOARD_LIST_URL` — URL to plain-text token list.
+     */
+    jobsGreenhouseBoardListUrl: jobEnv(
+      process.env.NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL,
+      process.env.JOBS_GREENHOUSE_BOARD_LIST_URL,
+    ),
+    /**
+     * `NUXT_JOBS_FETCH_USER_AGENT` or `JOBS_FETCH_USER_AGENT` — outbound User-Agent for job HTTP clients.
+     */
+    jobsFetchUserAgent: jobEnv(process.env.NUXT_JOBS_FETCH_USER_AGENT, process.env.JOBS_FETCH_USER_AGENT),
+    /**
+     * `NUXT_JOBS_HTTPS_PROXY`, `JOBS_HTTPS_PROXY`, or `HTTPS_PROXY` — Undici proxy for job sync fetches.
+     */
+    jobsHttpsProxy: jobEnv(
+      process.env.NUXT_JOBS_HTTPS_PROXY,
+      process.env.JOBS_HTTPS_PROXY,
+      process.env.HTTPS_PROXY,
+    ),
+    /**
+     * `NUXT_JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK` or `JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK` — skip CodeTabs when Remote OK returns 403.
+     */
+    jobsRemoteokDisableCodetabsFallback: jobEnvBool(
+      process.env.NUXT_JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK,
+      process.env.JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK,
+    ),
     public: {
-      /** Public site origin (no trailing slash). Used for canonical URLs, Open Graph, and sitemap. Set via `NUXT_PUBLIC_SITE_URL`. */
-      siteUrl: '',
+      /** `NUXT_PUBLIC_SITE_URL` or `SITE_URL` — public origin, no trailing slash (canonical, OG, sitemap). */
+      siteUrl: jobEnv(process.env.NUXT_PUBLIC_SITE_URL, process.env.SITE_URL),
     },
   },
 

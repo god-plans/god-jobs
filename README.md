@@ -77,7 +77,17 @@ Set **`NUXT_PUBLIC_SITE_URL`** to your public origin (no trailing slash) so cano
 | `JOBS_GREENHOUSE_BOARDS` | Fallback if the `NUXT_`-prefixed key is not set (server). |
 | `JOBS_FETCH_USER_AGENT` | Non-`NUXT_` fallback for the same User-Agent override (server). |
 
-**Why fewer jobs on the server than locally?** One sync only upserts what each API returns right now (e.g. Jobicy caps at 100; HN is filtered hiring titles). **Remote OK** often accounts for ~100 rows; if it errors with 403 on your server, you lose that chunk. Your local SQLite may also contain **months of history** from earlier syncs. After deploy, run **Sync** again and check the per-source line in the snackbar; set `NUXT_JOBS_FETCH_USER_AGENT` or add `NUXT_JOBS_RSS_FEEDS` / Greenhouse if you need more volume.
+**Why ~400 jobs on the server but ~1600 locally?** The sync snackbar shows how many rows each **source** returned **in that sync**, not your whole database history. With default settings (no extra RSS list, no Greenhouse), one successful sync is roughly:
+
+`remotive (~21) + arbeitnow (≤100) + remoteok (≤100) + hn (few, title-filtered) + rss (≤100 per configured feed; default is one WWR feed) + jobicy (≤100)` → **about 400–430** is normal.
+
+Locally you often have **more because:**
+
+1. **`NUXT_JOBS_GREENHOUSE_BOARDS`** (e.g. `curated`) or **`NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL`** on dev but not on the server — Greenhouse can add hundreds of rows and does not appear in the line above if it was never enabled in production.
+2. **`NUXT_JOBS_RSS_FEEDS`** lists **many** feeds on your machine but only the default single feed on the server — each feed caps near ~100 items depending on the feed.
+3. Your **local SQLite** has been syncing for a long time; APIs change (e.g. Remotive’s public list is small now). Old rows **stay** in the DB until you delete them or reset the DB — the server after a fresh deploy only has what the **latest** sync pulled.
+
+To **match local volume in production**, copy the same env vars (`NUXT_JOBS_RSS_FEEDS`, Greenhouse settings), deploy, and run **Sync**. To see **total** rows in the DB, use the job board total or export — not only the per-source sync counts.
 
 See the in-app **Jobs → About sources** section for full behavior and export links.
 
