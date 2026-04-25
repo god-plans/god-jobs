@@ -13,8 +13,20 @@ import {
 import type { JobFiltersModel } from '~~/shared/jobFilters'
 import { JOB_CATEGORY_PRESETS } from '~~/shared/jobCategoryPresets'
 
+withDefaults(
+  defineProps<{
+    /** Search input id (for focus / labels). */
+    searchId?: string
+    /** Category chips: mobile sheet always; tablet when sidebar hidden. */
+    showCategoryChips?: boolean
+  }>(),
+  {
+    searchId: 'jobs-search',
+    showCategoryChips: false,
+  },
+)
+
 const model = defineModel<JobFiltersModel>({ required: true })
-/** GkExpansionPanels v-model: keys of open panels (e.g. `more` for the extra filter grid). */
 const moreExpanded = ref<string[]>([])
 
 const sourceOptions = [
@@ -35,8 +47,8 @@ const workplaceOptions = [
 ] as const
 
 const sortFieldOptions = [
-  { value: 'updatedAt', label: 'Updated' },
-  { value: 'postedAt', label: 'Posted' },
+  { value: 'updatedAt', label: 'Sort: Updated' },
+  { value: 'postedAt', label: 'Sort: Posted' },
 ] as const
 
 const sortOrderOptions = [
@@ -47,7 +59,8 @@ const sortOrderOptions = [
 function workplaceModel(): string {
   return model.value.workplace
 }
-function setWorkplace(v: string | number | undefined) {
+function setWorkplace(v: string | number | (string | number)[] | undefined) {
+  if (Array.isArray(v)) return
   if (v === 'any' || v === 'remote' || v === 'onsite')
     model.value.workplace = v
 }
@@ -55,7 +68,8 @@ function setWorkplace(v: string | number | undefined) {
 function sortFieldModel(): string {
   return model.value.sortField
 }
-function setSortField(v: string | number | undefined) {
+function setSortField(v: string | number | (string | number)[] | undefined) {
+  if (Array.isArray(v)) return
   if (v === 'updatedAt' || v === 'postedAt')
     model.value.sortField = v
 }
@@ -63,7 +77,8 @@ function setSortField(v: string | number | undefined) {
 function sortOrderModel(): string {
   return model.value.sortOrder
 }
-function setSortOrder(v: string | number | undefined) {
+function setSortOrder(v: string | number | (string | number)[] | undefined) {
+  if (Array.isArray(v)) return
   if (v === 'asc' || v === 'desc')
     model.value.sortOrder = v
 }
@@ -71,7 +86,8 @@ function setSortOrder(v: string | number | undefined) {
 function sourceModel(): string {
   return model.value.source
 }
-function setSource(v: string | number | undefined) {
+function setSource(v: string | number | (string | number)[] | undefined) {
+  if (Array.isArray(v)) return
   model.value.source = typeof v === 'string' ? v : String(v ?? '')
 }
 
@@ -87,64 +103,28 @@ function toggleCategory(id: string) {
 </script>
 
 <template>
-  <div class="space-y-3">
-    <div class="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:gap-3">
-      <div class="min-w-0 w-full lg:flex-1">
-        <GkField label="Search" >
+  <div class="space-y-4">
+    <div class="relative">
+      <GkField label="Search" class="gj-jobs-search-field">
+        <div class="relative">
+
           <GkInput
-            id="jobs-search"
+            :id="searchId"
             v-model="model.q"
+            class="gj-jobs-search-input"
             type="search"
             enterkeyhint="search"
             placeholder="Search title, company, snippet…"
             autocomplete="off"
-            
           />
-        </GkField>
-      </div>
-      <div class="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3 lg:min-w-0 lg:flex-1 lg:justify-end">
-        <div class="w-full min-w-0 sm:w-[calc(50%-0.375rem)] sm:max-w-[11rem] md:w-auto md:max-w-[11rem]">
-          <GkField label="Source">
-            <GkSelect
-              :model-value="sourceModel()"
-              :options="[...sourceOptions]"
-              @update:model-value="setSource"
-            />
-          </GkField>
         </div>
-        <div class="w-full min-w-0 sm:w-[calc(50%-0.375rem)] sm:max-w-[11rem] md:w-auto md:max-w-[11rem]">
-          <GkField label="Workplace">
-            <GkSelect
-              :model-value="workplaceModel()"
-              :options="[...workplaceOptions]"
-              @update:model-value="setWorkplace"
-            />
-          </GkField>
-        </div>
-        <div class="w-full min-w-0 sm:w-full sm:max-w-none md:max-w-[14rem] lg:w-auto lg:min-w-[9rem]">
-          <div class="flex w-full min-w-0 flex-col gap-1">
-
-            <div class="flex w-full gap-2">
-              <GkSelect
-                class="min-w-0 flex-1"
-                :model-value="sortFieldModel()"
-                :options="[...sortFieldOptions]"
-                @update:model-value="setSortField"
-              />
-              <GkSelect
-              class="min-w-0 flex-1"
-           
-                :model-value="sortOrderModel()"
-                :options="[...sortOrderOptions]"
-                @update:model-value="setSortOrder"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      </GkField>
     </div>
 
-    <div class="w-full min-w-0 shrink-0">
+    <div
+      v-if="showCategoryChips"
+      class="w-full min-w-0"
+    >
       <p class="mb-2 text-xs font-medium uppercase tracking-wide" style="color: var(--gk-color-on-surface-variant)">
         Category
       </p>
@@ -161,14 +141,61 @@ function toggleCategory(id: string) {
         </GkButton>
       </div>
       <p v-if="model.category" class="mt-2 text-xs" style="color: var(--gk-color-on-surface-variant)">
-        Category filter uses keyword matching on title, company, and snippet. Clear the chip or type a new search to switch.
+        Category uses keyword matching on title, company, and snippet. Clear the chip or type a new search to switch.
       </p>
+    </div>
+
+    <div class="flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-end">
+      <div class="min-w-0 w-full flex-1 xl:max-w-[11rem]">
+        <GkField label="Source">
+          <GkSelect
+            :model-value="sourceModel()"
+            :options="[...sourceOptions]"
+            @update:model-value="setSource"
+          />
+        </GkField>
+      </div>
+      <div class="min-w-0 w-full flex-1 xl:max-w-[11rem]">
+        <GkField label="Workplace">
+          <GkSelect
+            :model-value="workplaceModel()"
+            :options="[...workplaceOptions]"
+            @update:model-value="setWorkplace"
+          />
+        </GkField>
+      </div>
+      <div class="min-w-0 w-full flex-1 xl:min-w-[12rem] xl:max-w-[16rem]">
+        <GkField label="Location">
+          <GkInput
+            v-model="model.location"
+            type="text"
+            placeholder="e.g. Germany, USA"
+            autocomplete="off"
+          />
+        </GkField>
+      </div>
+      <div class="flex min-w-0 w-full flex-1 gap-2 xl:max-w-[20rem]">
+        <GkField label="Sort by" label-sr-only class="min-w-0 flex-1 !mb-0">
+          <GkSelect
+            :model-value="sortFieldModel()"
+            :options="[...sortFieldOptions]"
+            @update:model-value="setSortField"
+          />
+        </GkField>
+        <GkField label="Order" label-sr-only class="min-w-0 flex-1 !mb-0">
+          <GkSelect
+            :model-value="sortOrderModel()"
+            :options="[...sortOrderOptions]"
+            @update:model-value="setSortOrder"
+          />
+        </GkField>
+      </div>
     </div>
 
     <GkExpansionPanels v-model="moreExpanded" multiple>
       <GkExpansionPanel value="more">
         <GkExpansionPanelTitle>
-          More filters (company, location, posted dates)
+          Advanced (company, posted dates)
         </GkExpansionPanelTitle>
         <GkExpansionPanelText>
           <GkGrid :columns="2" :columns-mobile="1" :gap="3">
@@ -178,16 +205,7 @@ function toggleCategory(id: string) {
                   v-model="model.company"
                   type="text"
                   autocomplete="organization"
-                  placeholder="e.g. godplans"
-                />
-              </GkField>
-            </div>
-            <div>
-              <GkField label="Location contains">
-                <GkInput
-                  v-model="model.location"
-                  type="text"
-                  placeholder="e.g. Germany"
+                  placeholder="e.g. acme"
                 />
               </GkField>
             </div>
