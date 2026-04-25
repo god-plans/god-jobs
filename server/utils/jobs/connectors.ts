@@ -120,34 +120,24 @@ export async function fetchArbeitnowJobs(): Promise<NewJobListing[]> {
   return out
 }
 
-/** Remote OK — public JSON API (first row may be legal/terms metadata). */
-export async function fetchRemoteOkJobs(): Promise<NewJobListing[]> {
-  const browserLikeUa =
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+const REMOTE_OK_API_URL = 'https://remoteok.com/api'
 
-  async function request(ua: string) {
-    return jobsFetch('https://remoteok.com/api', {
-      headers: {
-        'User-Agent': ua,
-        Accept: 'application/json',
-        Referer: 'https://remoteok.com/',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-    })
-  }
+/** Public CORS proxy — returns the same JSON as Remote OK when direct requests get HTTP 403 (e.g. Cloudflare + datacenter IP). */
+function remoteOkCodetabsProxyUrl(): string {
+  return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(REMOTE_OK_API_URL)}`
+}
 
-  let res = await request(getJobsFetchUserAgent())
-  if (res.status === 403) {
-    res = await request(browserLikeUa)
-  }
-  if (!res.ok) {
-    const hint =
-      res.status === 403
-        ? ' Datacenter IPs are often blocked; set NUXT_JOBS_HTTPS_PROXY (or JOBS_HTTPS_PROXY / HTTPS_PROXY) to a proxy, or run sync from another network.'
-        : ''
-    throw new Error(`Remote OK HTTP ${res.status}.${hint}`)
-  }
-  const data = (await res.json()) as Record<string, unknown>[]
+function remoteOkCodetabsFallbackDisabled(): boolean {
+  const v = String(
+    process.env.NUXT_JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK
+    ?? process.env.JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK
+    ?? '',
+  ).toLowerCase()
+  return v === '1' || v === 'true' || v === 'yes'
+}
+
+/** Map Remote OK `/api` JSON array rows to listings (skips the legal/terms row). */
+function mapRemoteOkApiRows(data: Record<string, unknown>[]): NewJobListing[] {
   const out: NewJobListing[] = []
   for (const row of data) {
     if (typeof row.legal === 'string') continue
@@ -175,6 +165,87 @@ export async function fetchRemoteOkJobs(): Promise<NewJobListing[]> {
     })
   }
   return out
+}
+
+export type FetchRemoteOkResult = { rows: NewJobListing[]; note?: string }
+
+/**
+ * Remote OK — public JSON API (first row may be legal/terms metadata).
+ * If the origin returns HTTP 403, retries via a public JSON proxy (CodeTabs) so self-hosted sync still works without your own HTTPS_PROXY.
+ */
+export async function fetchRemoteOkJobsResult(): Promise<FetchRemoteOkResult> {
+  const browserLikeUa =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+
+  async function requestDirect(ua: string) {
+    return jobsFetch(REMOTE_OK_API_URL, {
+      headers: {
+        'User-Agent': ua,
+        Accept: 'application/json',
+        Referer: 'https://remoteok.com/',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    })
+  }
+
+  let res = await requestDirect(getJobsFetchUserAgent())
+  if (res.status === 403) {
+    res = await requestDirect(browserLikeUa)
+  }
+
+  if (res.ok) {
+    const data = (await res.json()) as Record<string, unknown>[]
+    return { rows: mapRemoteOkApiRows(Array.isArray(data) ? data : []) }
+  }
+
+  if (res.status === 403 && !remoteOkCodetabsFallbackDisabled()) {
+    const proxied = await jobsFetch(remoteOkCodetabsProxyUrl(), {
+      headers: {
+        'User-Agent': getJobsFetchUserAgent(),
+        Accept: 'application/json',
+      },
+    })
+    if (proxied.ok) {
+      const raw = await proxied.text()
+      let data: unknown
+      try {
+        data = JSON.parse(raw) as unknown
+      }
+      catch {
+        throw new Error(
+          'Remote OK HTTP 403; CodeTabs proxy returned non-JSON. Set NUXT_JOBS_HTTPS_PROXY or set NUXT_JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK=1 to skip this fallback.',
+        )
+      }
+      if (!Array.isArray(data)) {
+        throw new Error(
+          'Remote OK HTTP 403; CodeTabs proxy returned unexpected JSON. Set NUXT_JOBS_HTTPS_PROXY.',
+        )
+      }
+      return {
+        rows: mapRemoteOkApiRows(data as Record<string, unknown>[]),
+        note: 'Remote OK API blocked this host (HTTP 403); used CodeTabs public proxy for the same JSON. Prefer NUXT_JOBS_HTTPS_PROXY for a direct trust path, or set NUXT_JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK=1 to skip this fallback.',
+      }
+    }
+    throw new Error(
+      `Remote OK HTTP 403; CodeTabs proxy HTTP ${proxied.status}. Set NUXT_JOBS_HTTPS_PROXY (or HTTPS_PROXY), or retry later.`,
+    )
+  }
+
+  const hint =
+    res.status === 403
+      ? ` Datacenter IPs are often blocked. Set NUXT_JOBS_HTTPS_PROXY (or HTTPS_PROXY).${
+        remoteOkCodetabsFallbackDisabled()
+          ? ' CodeTabs JSON proxy fallback is off (NUXT_JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK); remove that env var to retry with the automatic fallback.'
+          : ''
+      }`
+      : ''
+  throw new Error(`Remote OK HTTP ${res.status}.${hint}`)
+}
+
+/** Same as {@link fetchRemoteOkJobsResult} but returns only rows (no sync note). */
+export async function fetchRemoteOkJobs(): Promise<NewJobListing[]> {
+  const { rows } = await fetchRemoteOkJobsResult()
+  return rows
 }
 
 /** RSS or Atom feeds — Telegram via RSSHub, job-board RSS, etc. Uses `fetch` + parse (not `parseURL`) for consistent UA/TLS. */

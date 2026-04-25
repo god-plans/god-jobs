@@ -57,6 +57,8 @@ export default defineNuxtConfig({
     jobsFetchUserAgent: '',
     /** HTTP(S) proxy URL for job sync outbound requests (Undici). Env: `NUXT_JOBS_HTTPS_PROXY`. Use if Remote OK returns 403 from your host’s IP. */
     jobsHttpsProxy: '',
+    /** Set `true` to skip CodeTabs JSON proxy when Remote OK API returns 403. Env: `NUXT_JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK`. */
+    jobsRemoteokDisableCodetabsFallback: false,
     public: {
       /** Public site origin (no trailing slash). Used for canonical URLs, Open Graph, and sitemap. Set via `NUXT_PUBLIC_SITE_URL`. */
       siteUrl: '',

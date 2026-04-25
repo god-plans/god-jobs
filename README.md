@@ -73,6 +73,7 @@ Set **`NUXT_PUBLIC_SITE_URL`** to your public origin (no trailing slash) so cano
 | `NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL` | URL to a plain-text list of extra board tokens (one per line). |
 | `NUXT_JOBS_FETCH_USER_AGENT` | Optional full User-Agent string for outbound job syncs. Some hosts (e.g. certain VPS ranges) get **HTTP 403** from Remote OK with the default; set a normal browser UA here if sync logs show `Remote OK HTTP 403`. |
 | `NUXT_JOBS_HTTPS_PROXY` | Optional proxy URL for **all** job connector HTTP requests (e.g. `http://user:pass@host:8888`). Remote OK sits behind Cloudflare and often **403s datacenter IPs** regardless of User-Agent; routing sync through a residential or clean proxy usually fixes it. Also accepts `JOBS_HTTPS_PROXY` or standard `HTTPS_PROXY`. |
+| `NUXT_JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK` | Set to `1` / `true` to **skip** the automatic Remote OK fallback: when `https://remoteok.com/api` returns **403**, sync fetches the same JSON via [CodeTabs](https://codetabs.com/)’s public proxy (`api.codetabs.com`) so self-hosted instances work without your own proxy. Disable if you do not want third-party relay traffic. Also: `JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK`. |
 | `JOBS_GREENHOUSE_BOARDS` | Fallback if the `NUXT_`-prefixed key is not set (server). |
 | `JOBS_FETCH_USER_AGENT` | Non-`NUXT_` fallback for the same User-Agent override (server). |
 

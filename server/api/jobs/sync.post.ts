@@ -6,7 +6,7 @@ import {
   fetchGreenhouseJobs,
   fetchHnJobs,
   fetchJobicyJobs,
-  fetchRemoteOkJobs,
+  fetchRemoteOkJobsResult,
   fetchRemotiveJobs,
   fetchRssFeedJobs,
   type JobSourceId,
@@ -86,7 +86,10 @@ export default defineEventHandler(async (event) => {
         rows = await fetchArbeitnowJobs()
       }
       else if (src === 'remoteok') {
-        rows = await fetchRemoteOkJobs()
+        const { rows: roRows, note: roNote } = await fetchRemoteOkJobsResult()
+        const count = upsertJobRows(roRows)
+        result.remoteok = roNote ? { ok: true, count, note: roNote } : { ok: true, count }
+        continue
       }
       else if (src === 'rss') {
         const configured = [...new Set([...feedsFromEnv, ...(rssFeedUrls ?? [])])]
