@@ -41,6 +41,15 @@ const mobilePagesLoaded = ref(1)
 const mdUp = ref(false)
 const lgUp = ref(false)
 
+/** Sync before fetch + paint so desktop doesn’t render as “mobile” until onMounted (avoids layout jump). */
+function setBreakpoints() {
+  if (import.meta.client && typeof window !== 'undefined' && window.matchMedia) {
+    mdUp.value = window.matchMedia('(min-width: 768px)').matches
+    lgUp.value = window.matchMedia('(min-width: 1024px)').matches
+  }
+}
+setBreakpoints()
+
 const { list, sync } = useJobs()
 
 const debouncedQ = ref('')
@@ -313,12 +322,6 @@ function openExternal(url: string) {
 
 let mqMd: MediaQueryList | null = null
 let mqLg: MediaQueryList | null = null
-function setBreakpoints() {
-  if (import.meta.client && window.matchMedia) {
-    mdUp.value = window.matchMedia('(min-width: 768px)').matches
-    lgUp.value = window.matchMedia('(min-width: 1024px)').matches
-  }
-}
 
 onMounted(() => {
   setBreakpoints()
@@ -435,12 +438,10 @@ onBeforeUnmount(() => {
     />
     <GkAlert v-if="error" :text="String(error?.message || error)" class="!my-0" variant="danger" />
 
-    <div
-      class="lg:grid lg:grid-cols-[minmax(200px,15rem)_1fr] lg:items-start lg:gap-8"
-    >
+    <!-- Flex (not 2-col grid) so main isn’t stuck in the sidebar track when aside is display:none &lt; lg. -->
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
       <aside
-        v-if="mdUp && lgUp"
-        class="sticky top-20 z-10 hidden min-w-0 self-start rounded-[var(--gk-radius-lg)] border p-4 lg:block"
+        class="sticky top-20 z-10 hidden min-w-0 shrink-0 self-start rounded-[var(--gk-radius-lg)] border p-4 lg:block lg:w-[min(15rem,100%)] lg:max-w-[15rem]"
         style="
           border-color: var(--gk-color-border);
           background: var(--gk-color-surface-elevated);
@@ -470,10 +471,9 @@ onBeforeUnmount(() => {
         </p>
       </aside>
 
-      <div class="min-w-0 space-y-4">
+      <div class="min-w-0 w-full flex-1 space-y-4">
         <div
-          v-if="mdUp"
-          class="gj-surface gj-surface--raised rounded-[var(--gk-radius-lg)] p-4 sm:p-5"
+          class="hidden gj-surface gj-surface--raised rounded-[var(--gk-radius-lg)] p-4 sm:p-5 md:block"
           style="backface-visibility: hidden"
           role="search"
           aria-label="Job search and filters"
@@ -517,7 +517,7 @@ onBeforeUnmount(() => {
         <div
           class="gj-surface gj-surface--raised jobs-list-card-wrap overflow-hidden rounded-[var(--gk-radius-lg)]"
         >
-          <div v-if="!mdUp" class="border-b px-4 py-3" style="border-color: var(--gk-color-border)">
+          <div class="border-b px-4 py-3 md:hidden" style="border-color: var(--gk-color-border)">
             <p class="text-sm font-medium tabular-nums" style="color: var(--gk-color-on-surface)">
               <template v-if="pending && displayedCount === 0">
                 Searching…
@@ -565,7 +565,7 @@ onBeforeUnmount(() => {
             role="navigation"
             aria-label="Job list pagination"
           >
-            <div v-if="mdUp" class="hidden md:block">
+            <div class="hidden md:block">
               <div class="gj-pagination-bar flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <p class="jobs-list-footer__summary min-w-0 text-sm" style="color: var(--gk-color-on-surface-variant)">
                   <span v-if="total > 0">Showing {{ showingFrom }}–{{ showingTo }} of {{ total.toLocaleString() }}</span>
@@ -591,7 +591,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div v-if="!mdUp" class="flex flex-col gap-3 p-4 md:hidden">
+            <div class="flex flex-col gap-3 p-4 md:hidden">
               <p
                 v-if="total > 0"
                 class="text-center text-sm tabular-nums"
