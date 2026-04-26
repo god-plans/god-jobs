@@ -29,7 +29,8 @@ export default defineEventHandler(async (event) => {
   const created: { id: number; name: string }[] = []
 
   if (type === 'github') {
-    const token = process.env.GITHUB_TOKEN
+    const tokenRaw = String(useRuntimeConfig(event).githubToken ?? '').trim()
+    const token = tokenRaw || undefined
     const hits = await searchGithubOrgs(q, lim, token)
     for (const h of hits) {
       const website = h.blog || h.html_url

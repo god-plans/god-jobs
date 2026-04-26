@@ -43,17 +43,11 @@ export default defineEventHandler(async (event) => {
     .map((s: string) => s.trim())
     .filter(Boolean)
 
-  const greenhouseBoardsRaw =
-    String(config.jobsGreenhouseBoards ?? '').trim()
-    || String(process.env.NUXT_JOBS_GREENHOUSE_BOARDS ?? '').trim()
-    || String(process.env.JOBS_GREENHOUSE_BOARDS ?? '').trim()
+  const greenhouseBoardsRaw = String(config.jobsGreenhouseBoards ?? '').trim()
 
   let greenhouseBoards = expandGreenhouseBoardTokens(parseGreenhouseBoardTokens(greenhouseBoardsRaw))
 
-  const boardListUrl =
-    String(config.jobsGreenhouseBoardListUrl ?? '').trim()
-    || String(process.env.NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL ?? '').trim()
-    || String(process.env.JOBS_GREENHOUSE_BOARD_LIST_URL ?? '').trim()
+  const boardListUrl = String(config.jobsGreenhouseBoardListUrl ?? '').trim()
 
   let greenhouseListUrlWarn: string | undefined
   if (boardListUrl) {

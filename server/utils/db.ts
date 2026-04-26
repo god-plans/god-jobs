@@ -22,8 +22,22 @@ function isServerlessWritableTmp() {
   )
 }
 
+function runtimePathOverrides(): { dataDir: string; sqlitePath: string } {
+  try {
+    const c = useRuntimeConfig()
+    return {
+      dataDir: String(c.godJobsDataDir ?? '').trim(),
+      sqlitePath: String(c.godJobsSqlitePath ?? '').trim(),
+    }
+  }
+  catch {
+    return { dataDir: '', sqlitePath: '' }
+  }
+}
+
 function getDataDir() {
-  const override = process.env.GOD_JOBS_DATA_DIR?.trim()
+  const rc = runtimePathOverrides()
+  const override = rc.dataDir || process.env.GOD_JOBS_DATA_DIR?.trim()
   if (override)
     return override
   if (isServerlessWritableTmp())
@@ -32,7 +46,8 @@ function getDataDir() {
 }
 
 function getDbPath() {
-  const override = process.env.GOD_JOBS_SQLITE_PATH?.trim()
+  const rc = runtimePathOverrides()
+  const override = rc.sqlitePath || process.env.GOD_JOBS_SQLITE_PATH?.trim()
   if (override)
     return override
   return join(getDataDir(), 'god-jobs.sqlite')

@@ -16,6 +16,11 @@ export default defineNitroPlugin(() => {
 
   assign('NUXT_JOBS_HTTPS_PROXY', String(c.jobsHttpsProxy ?? ''))
 
+  assign('NUXT_JOBS_GREENHOUSE_BOARDS', String(c.jobsGreenhouseBoards ?? ''))
+  assign('JOBS_GREENHOUSE_BOARDS', String(c.jobsGreenhouseBoards ?? ''))
+  assign('NUXT_JOBS_GREENHOUSE_BOARD_LIST_URL', String(c.jobsGreenhouseBoardListUrl ?? ''))
+  assign('JOBS_GREENHOUSE_BOARD_LIST_URL', String(c.jobsGreenhouseBoardListUrl ?? ''))
+
   if (c.jobsRemoteokDisableCodetabsFallback) {
     if (!process.env.NUXT_JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK?.trim()
       && !process.env.JOBS_REMOTEOK_DISABLE_CODETABS_FALLBACK?.trim()) {

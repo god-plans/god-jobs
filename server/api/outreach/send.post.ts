@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 503,
       statusMessage: 'Mail not configured',
-      message: 'Set SMTP_* and MAIL_FROM environment variables.',
+      message: 'Set mail + SMTP fields in config/static-public-env.ts or NUXT_* / SMTP_* env.',
     })
   }
 
@@ -31,7 +31,8 @@ export default defineEventHandler(async (event) => {
   const { startupIds, delayMs } = parsed.data
   const wait = delayMs ?? DEFAULT_DELAY_MS
   const db = useDb()
-  const defaultSubject = process.env.OUTREACH_SUBJECT || 'Introduction'
+  const cfg = useRuntimeConfig(event)
+  const defaultSubject = String(cfg.outreachSubject ?? '').trim() || 'Introduction'
 
   const results: { id: number; ok: boolean; error?: string }[] = []
 
