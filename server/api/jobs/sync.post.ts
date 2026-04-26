@@ -1,5 +1,6 @@
 import { readBody } from 'h3'
 import { z } from 'zod'
+import { bumpJobsListApiCache } from '../../utils/jobs-list-api-cache'
 import {
   DEFAULT_JOB_RSS_FEEDS,
   fetchArbeitnowJobs,
@@ -131,5 +132,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  bumpJobsListApiCache()
   return { result, syncedAt: new Date().toISOString() }
 })

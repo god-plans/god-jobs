@@ -34,6 +34,7 @@ const filters = reactive<JobFiltersModel>({
 })
 const mobileFiltersOpen = ref(false)
 const aboutDialogOpen = ref(false)
+const syncLogDialogOpen = ref(false)
 const page = ref(1)
 const pageSize = ref(50)
 const mobilePagesLoaded = ref(1)
@@ -204,6 +205,10 @@ watch([total, pageCount], () => {
 const syncing = ref(false)
 const syncMsg = ref('')
 
+const syncLogLooksLikeError = computed(() =>
+  /error|failed/i.test(syncMsg.value),
+)
+
 async function runSync() {
   syncMsg.value = ''
   syncing.value = true
@@ -218,11 +223,13 @@ async function runSync() {
     syncMsg.value = parts.join(' · ')
     pushGkSnackbar({ text: 'Sync completed', variant: 'success', timeout: 5000 })
     await refresh()
+    syncLogDialogOpen.value = true
   }
   catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Sync failed'
     syncMsg.value = msg
     pushGkSnackbar({ text: msg, variant: 'warning', timeout: 8000 })
+    syncLogDialogOpen.value = true
   }
   finally {
     syncing.value = false
@@ -413,6 +420,16 @@ onBeforeUnmount(() => {
           >
             Refresh
           </GkButton>
+          <GkButton
+            v-if="syncMsg"
+            type="button"
+            class="col-span-2 w-full sm:col-span-1 sm:w-auto"
+            size="sm"
+            variant="ghost"
+            @click="syncLogDialogOpen = true"
+          >
+            Sync log
+          </GkButton>
         </div>
       </div>
       <p
@@ -430,12 +447,6 @@ onBeforeUnmount(() => {
       </p>
     </div>
 
-    <GkAlert
-      v-if="syncMsg"
-      :text="syncMsg"
-      class="!my-0"
-      :variant="syncMsg.includes('error') || syncMsg.includes('failed') || syncMsg.includes('Error') ? 'danger' : 'neutral'"
-    />
     <GkAlert v-if="error" :text="String(error?.message || error)" class="!my-0" variant="danger" />
 
     <!-- Flex (not 2-col grid) so main isn’t stuck in the sidebar track when aside is display:none &lt; lg. -->
@@ -685,6 +696,27 @@ onBeforeUnmount(() => {
     </div>
 
     <div ref="resultsSentinel" class="pointer-events-none h-1 w-full shrink-0" aria-hidden="true" />
+
+    <GkDialog v-model="syncLogDialogOpen" aria-labelledby="jobs-sync-log-title" :max-width="640" scrollable>
+      <h2
+        id="jobs-sync-log-title"
+        class="text-lg font-semibold"
+        :style="syncLogLooksLikeError ? { color: 'var(--gk-color-danger)' } : { color: 'var(--gk-color-on-surface)' }"
+      >
+        {{ syncLogLooksLikeError ? 'Sync failed' : 'Sync log' }}
+      </h2>
+      <p
+        class="mt-3 max-h-[min(50vh,28rem)] overflow-auto whitespace-pre-wrap break-words text-xs leading-relaxed sm:text-sm"
+        style="color: var(--gk-color-on-surface-variant)"
+      >
+        {{ syncMsg }}
+      </p>
+      <div class="mt-5">
+        <GkButton type="button" @click="syncLogDialogOpen = false">
+          Close
+        </GkButton>
+      </div>
+    </GkDialog>
 
     <GkDialog v-model="aboutDialogOpen" aria-labelledby="jobs-about-title" :max-width="640" scrollable>
       <h2 id="jobs-about-title" class="text-lg font-semibold" style="color: var(--gk-color-on-surface)">
