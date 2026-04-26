@@ -223,13 +223,11 @@ async function runSync() {
     syncMsg.value = parts.join(' · ')
     pushGkSnackbar({ text: 'Sync completed', variant: 'success', timeout: 5000 })
     await refresh()
-    syncLogDialogOpen.value = true
   }
   catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Sync failed'
     syncMsg.value = msg
     pushGkSnackbar({ text: msg, variant: 'warning', timeout: 8000 })
-    syncLogDialogOpen.value = true
   }
   finally {
     syncing.value = false
